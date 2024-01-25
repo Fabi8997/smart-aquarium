@@ -21,6 +21,7 @@ public class MQTTCollector implements MqttCallback {
         mqttClient.connect();
         
         mqttClient.subscribe(topic);
+        // TODO GITIGNORE FOR THE BUILDS!!!
 	}
 
 	@Override
