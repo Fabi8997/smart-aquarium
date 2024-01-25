@@ -9,7 +9,7 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 public class MQTTCollector implements MqttCallback {
 	
 	public MQTTCollector() throws MqttException {
-        String topic        = "alert";
+        String topic        = "ph";
         String broker       = "tcp://127.0.0.1:1883";
         String clientId     = "JavaApp";
 		
