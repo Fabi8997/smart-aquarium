@@ -48,8 +48,8 @@ static uint8_t state;
 #define STATE_DISCONNECTED    5
 
 /*---------------------------------------------------------------------------*/
-PROCESS_NAME(mqtt_ph_process);
-AUTOSTART_PROCESSES(&mqtt_ph_process);
+PROCESS_NAME(mqtt_pH_process);
+AUTOSTART_PROCESSES(&mqtt_pH_process);
 
 /*---------------------------------------------------------------------------*/
 /* Maximum TCP segment size for outgoing segments of our socket */
@@ -83,7 +83,7 @@ static struct mqtt_message *msg_ptr = 0;
 static struct mqtt_connection conn;
 
 /*---------------------------------------------------------------------------*/
-PROCESS(mqtt_ph_process, "MQTT pH Client");
+PROCESS(mqtt_pH_process, "MQTT pH Client");
 
 
 
@@ -117,7 +117,7 @@ mqtt_event(struct mqtt_connection *m, mqtt_event_t event, void *data)
     printf("MQTT Disconnect. Reason %u\n", *((mqtt_event_t *)data));
 
     state = STATE_DISCONNECTED;
-    process_poll(&mqtt_ph_process);
+    process_poll(&mqtt_pH_process);
     break;
   }
   case MQTT_EVENT_PUBLISH: {
@@ -170,17 +170,17 @@ have_connectivity(void)
 /*---------------------------------------------------------------------------*/
 
 
-/*Initialized the value of the ph to the value at the center of the interval*/
-static float ph_value = 7.0;
+/*Initialized the value of the pH to the value at the center of the interval*/
+static float pH_value = 7.0;
 
 /*Extreme of the safe interval for the pH (to be used for leds)*/
-//static float min_ph_value = 6.5;
-//static float max_ph_value = 7.5;
+//static float min_pH_value = 6.5;
+//static float max_pH_value = 7.5;
 
-/*Values used respectively to define the upper bound of the possible variation interval and for the standard ph
+/*Values used respectively to define the upper bound of the possible variation interval and for the standard pH
   variation in case of stabilization using CO2*/
-static float max_ph_variation = 0.2;
-static float ph_variation_co2 = 0.05;
+static float max_pH_variation = 0.2;
+static float pH_variation_co2 = 0.05;
 
 /*If CO2_variation = 0 => no stabilization of pH active (START STATE)
   if CO2_variation = -1 => the CO2 erogation tries to reduce the pH gradually
@@ -189,11 +189,12 @@ static float ph_variation_co2 = 0.05;
   NOTE: for simulation purposes this value is changed based on the value publiced in the topic related to the CO2
 	changes, that is a topic created ONLY to make the simulation coherent. 
 */
-static int CO2_variation = 0;
+
+//static int CO2_variation = 0;
 
 /*The following function is used to simulate the changes of the pH sensed by the pH device; it require a parameter
   that indicates if the CO2 variation is activated to increase/reduce the pH value.*/
-static void change_ph_simulation(int CO2){
+static void change_pH_simulation(int CO2){
 
 	
 	/*If no change in the erogation of CO2 is active, so random behaviour*/
@@ -202,7 +203,7 @@ static void change_ph_simulation(int CO2){
 		int decision = rand() % 3;
 
 		/*Generate a float in the interval [0.0, 0.2] used to vary the pH*/
-		float ph_variation = (float)rand()/(float)(RAND_MAX/max_ph_variation);
+		float pH_variation = (float)rand()/(float)(RAND_MAX/max_pH_variation);
 
 		switch(decision){
 			/*No variation*/
@@ -211,22 +212,22 @@ static void change_ph_simulation(int CO2){
 			}
 			/*Increment the pH*/
 			case 1:{
-				ph_value += ph_variation;
+				pH_value += pH_variation;
 				break;
 			}
 			/*Decrease the pH*/
 			case 2:{
-				ph_value -= ph_variation;
+				pH_value -= pH_variation;
 				break;
 			}			
 		}
 	/*The CO2 erogation tries to reduce the pH value, it is done gradually to avoid to harm the fishes*/
 	}else if(CO2 == -1){
-		ph_value -= ph_variation_co2;
+		pH_value -= pH_variation_co2;
 
 	/*The CO2 erogation tries to increase the pH value, it is done gradually to avoid to harm the fishes*/
 	} else if(CO2 == 1){
-		ph_value += ph_variation_co2;
+		pH_value += pH_variation_co2;
 	}
 }
 
@@ -240,7 +241,7 @@ static void change_ph_simulation(int CO2){
 /*---------------------------------------------------------------------------*/
 /*---------------------------------------------------------------------------*/
 
-PROCESS_THREAD(mqtt_ph_process, ev, data)
+PROCESS_THREAD(mqtt_pH_process, ev, data)
 {
 
   PROCESS_BEGIN();
@@ -248,7 +249,7 @@ PROCESS_THREAD(mqtt_ph_process, ev, data)
   mqtt_status_t status;
   char broker_address[CONFIG_IP_ADDR_STR_LEN];
 
-  printf("MQTT Client Process\n");
+  printf("MQTT Ph Process\n");
 
   // Initialize the ClientID as MAC address
   snprintf(client_id, BUFFER_SIZE, "%02x%02x%02x%02x%02x%02x",
@@ -257,7 +258,7 @@ PROCESS_THREAD(mqtt_ph_process, ev, data)
                      linkaddr_node_addr.u8[6], linkaddr_node_addr.u8[7]);
 
   // Broker registration					 
-  mqtt_register(&conn, &mqtt_ph_process, client_id, mqtt_event,
+  mqtt_register(&conn, &mqtt_pH_process, client_id, mqtt_event,
                   MAX_TCP_SEGMENT_SIZE);
 				  
   state=STATE_INIT;
@@ -309,12 +310,12 @@ PROCESS_THREAD(mqtt_ph_process, ev, data)
 			  
 		if(state == STATE_SUBSCRIBED){
 			// Publish something
-		    sprintf(pub_topic, "%s", "ph");
+		    sprintf(pub_topic, "%s", "pH");
 			
-			change_ph_simulation(0);
+			change_pH_simulation(0);
 
-			// Since the precision of the ph sensor is limeted to +=0.01 then are sent just the first two digit of the fractional part
-			sprintf(app_buffer, "{\"ph\": %.2f}", ph_value);
+			// Since the precision of the pH sensor is limeted to +=0.01 then are sent just the first two digit of the fractional part
+			sprintf(app_buffer, "{\"pH\":%.2f}", pH_value);
 			
 				
 			mqtt_publish(&conn, NULL, pub_topic, (uint8_t *)app_buffer,

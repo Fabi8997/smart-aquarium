@@ -7,12 +7,11 @@ import mqtt.iot.unipi.it.MQTTCollector;
 public class Main {
 
 	public static void main(String[] args) {
-		System.out.println("Hello world iot!");
-        
+		System.out.println("[SMART AQUARIUM] Welcome to your Smart Aquarium!");
         try {
         	
         	MQTTCollector mqttCollector = new MQTTCollector();
-
+        	
         } catch(MqttException me) {
 
             me.printStackTrace();

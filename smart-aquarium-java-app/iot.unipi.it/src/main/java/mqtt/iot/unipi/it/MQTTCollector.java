@@ -5,13 +5,17 @@ import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
+import ph.mqtt.iot.unipi.it.PHSample;
 
 public class MQTTCollector implements MqttCallback {
 	
+	private final String pH_topic = "pH";
+	//TODO To add temperature and the other topic
+	
 	public MQTTCollector() throws MqttException {
-        String topic        = "ph";
+		
         String broker       = "tcp://127.0.0.1:1883";
-        String clientId     = "JavaApp";
+        String clientId     = "SmartAquariumMQTTCollector";
 		
 		MqttClient mqttClient = new MqttClient(broker, clientId);
         System.out.println("Connecting to broker: "+broker);
@@ -20,7 +24,8 @@ public class MQTTCollector implements MqttCallback {
         
         mqttClient.connect();
         
-        mqttClient.subscribe(topic);
+        //Subscribe to the pH topic
+        mqttClient.subscribe(pH_topic);
         // TODO GITIGNORE FOR THE BUILDS!!!
 	}
 
@@ -32,7 +37,18 @@ public class MQTTCollector implements MqttCallback {
 
 	@Override
 	public void messageArrived(String topic, MqttMessage message) throws Exception {
-        System.out.println(String.format("[%s] %s", topic, new String(message.getPayload())));
+		
+		if(topic.equals(pH_topic)) {
+			
+			
+			//Create a pH sample object passing the JSON document
+			PHSample pHSample = new PHSample(new String(message.getPayload()));
+
+			//TODO instead of print use the log
+			System.out.println(String.format("[%s] %s", topic, pHSample));
+			
+			//TODO Insert the sample in the database
+		}
 	}
 
 	@Override
