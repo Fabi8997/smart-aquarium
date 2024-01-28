@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<it.unipi.iot.configuration.ConfigurationParameters>
+	<databaseIP>localhost</databaseIP>
+	<databasePort>3306</databasePort>
+	<databaseUsername>root</databaseUsername>
+	<databasePassword>root</databasePassword>
+	<databaseName>smart_aquarium</databaseName>
+</it.unipi.iot.configuration.ConfigurationParameters>
