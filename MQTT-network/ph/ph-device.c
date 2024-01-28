@@ -48,8 +48,8 @@ static uint8_t state;
 #define STATE_DISCONNECTED    5
 
 /*---------------------------------------------------------------------------*/
-PROCESS_NAME(mqtt_client_process);
-AUTOSTART_PROCESSES(&mqtt_client_process);
+PROCESS_NAME(mqtt_pH_process);
+AUTOSTART_PROCESSES(&mqtt_pH_process);
 
 /*---------------------------------------------------------------------------*/
 /* Maximum TCP segment size for outgoing segments of our socket */
@@ -65,8 +65,6 @@ AUTOSTART_PROCESSES(&mqtt_client_process);
 static char client_id[BUFFER_SIZE];
 static char pub_topic[BUFFER_SIZE];
 static char sub_topic[BUFFER_SIZE];
-
-static int value = 0;
 
 // Periodic timer to check the state of the MQTT client
 #define STATE_MACHINE_PERIODIC     (CLOCK_SECOND >> 1)
@@ -85,7 +83,7 @@ static struct mqtt_message *msg_ptr = 0;
 static struct mqtt_connection conn;
 
 /*---------------------------------------------------------------------------*/
-PROCESS(mqtt_client_process, "MQTT Client");
+PROCESS(mqtt_pH_process, "MQTT pH Client");
 
 
 
@@ -97,8 +95,8 @@ pub_handler(const char *topic, uint16_t topic_len, const uint8_t *chunk,
   printf("Pub Handler: topic='%s' (len=%u), chunk_len=%u\n", topic,
           topic_len, chunk_len);
 
-  if(strcmp(topic, "actuator") == 0) {
-    printf("Received Actuator command\n");
+  if(strcmp(topic, "CO2") == 0) {
+    printf("CO2\n");
 	printf("%s\n", chunk);
     // Do something :)
     return;
@@ -119,7 +117,7 @@ mqtt_event(struct mqtt_connection *m, mqtt_event_t event, void *data)
     printf("MQTT Disconnect. Reason %u\n", *((mqtt_event_t *)data));
 
     state = STATE_DISCONNECTED;
-    process_poll(&mqtt_client_process);
+    process_poll(&mqtt_pH_process);
     break;
   }
   case MQTT_EVENT_PUBLISH: {
@@ -168,7 +166,82 @@ have_connectivity(void)
 }
 
 /*---------------------------------------------------------------------------*/
-PROCESS_THREAD(mqtt_client_process, ev, data)
+/*----------------------------------SIMULATION-------------------------------*/
+/*---------------------------------------------------------------------------*/
+
+
+/*Initialized the value of the pH to the value at the center of the interval*/
+static float pH_value = 7.0;
+
+/*Extreme of the safe interval for the pH (to be used for leds)*/
+//static float min_pH_value = 6.5;
+//static float max_pH_value = 7.5;
+
+/*Values used respectively to define the upper bound of the possible variation interval and for the standard pH
+  variation in case of stabilization using CO2*/
+static float max_pH_variation = 0.2;
+static float pH_variation_co2 = 0.05;
+
+/*If CO2_variation = 0 => no stabilization of pH active (START STATE)
+  if CO2_variation = -1 => the CO2 erogation tries to reduce the pH gradually
+  if CO2_variation = 1 => the CO2 erogation tries to increase the pH gradually
+
+  NOTE: for simulation purposes this value is changed based on the value publiced in the topic related to the CO2
+	changes, that is a topic created ONLY to make the simulation coherent. 
+*/
+
+//static int CO2_variation = 0;
+
+/*The following function is used to simulate the changes of the pH sensed by the pH device; it require a parameter
+  that indicates if the CO2 variation is activated to increase/reduce the pH value.*/
+static void change_pH_simulation(int CO2){
+
+	
+	/*If no change in the erogation of CO2 is active, so random behaviour*/
+	if(CO2 == 0){
+		/*Generate an integer belonging to the set {0,1,2} to take a decision for the simulation*/
+		int decision = rand() % 3;
+
+		/*Generate a float in the interval [0.0, 0.2] used to vary the pH*/
+		float pH_variation = (float)rand()/(float)(RAND_MAX/max_pH_variation);
+
+		switch(decision){
+			/*No variation*/
+			case 0:{
+				break;
+			}
+			/*Increment the pH*/
+			case 1:{
+				pH_value += pH_variation;
+				break;
+			}
+			/*Decrease the pH*/
+			case 2:{
+				pH_value -= pH_variation;
+				break;
+			}			
+		}
+	/*The CO2 erogation tries to reduce the pH value, it is done gradually to avoid to harm the fishes*/
+	}else if(CO2 == -1){
+		pH_value -= pH_variation_co2;
+
+	/*The CO2 erogation tries to increase the pH value, it is done gradually to avoid to harm the fishes*/
+	} else if(CO2 == 1){
+		pH_value += pH_variation_co2;
+	}
+}
+
+/*TODO: add the CO2 behaviour both here and in the MQTTCollector;
+        maybe before I have to implement the database part! in this way
+	the mqtt network can be completed without problems.
+	Cambiamenti dati dalla CO2 proporzionali al kH????? maggiore è il kh
+	minore sarà il cambiamento del pH, molto bella come idea*/
+
+/*---------------------------------------------------------------------------*/
+/*---------------------------------------------------------------------------*/
+/*---------------------------------------------------------------------------*/
+
+PROCESS_THREAD(mqtt_pH_process, ev, data)
 {
 
   PROCESS_BEGIN();
@@ -176,7 +249,7 @@ PROCESS_THREAD(mqtt_client_process, ev, data)
   mqtt_status_t status;
   char broker_address[CONFIG_IP_ADDR_STR_LEN];
 
-  printf("MQTT Client Process\n");
+  printf("MQTT Ph Process\n");
 
   // Initialize the ClientID as MAC address
   snprintf(client_id, BUFFER_SIZE, "%02x%02x%02x%02x%02x%02x",
@@ -185,7 +258,7 @@ PROCESS_THREAD(mqtt_client_process, ev, data)
                      linkaddr_node_addr.u8[6], linkaddr_node_addr.u8[7]);
 
   // Broker registration					 
-  mqtt_register(&conn, &mqtt_client_process, client_id, mqtt_event,
+  mqtt_register(&conn, &mqtt_pH_process, client_id, mqtt_event,
                   MAX_TCP_SEGMENT_SIZE);
 				  
   state=STATE_INIT;
@@ -208,7 +281,7 @@ PROCESS_THREAD(mqtt_client_process, ev, data)
 		  
 		  if(state == STATE_NET_OK){
 			  // Connect to MQTT server
-			  printf("Connecting!\n");
+			  printf("Connecting to the MQTT server!\n");
 			  
 			  memcpy(broker_address, broker_ip, strlen(broker_ip));
 			  
@@ -221,11 +294,11 @@ PROCESS_THREAD(mqtt_client_process, ev, data)
 		  if(state==STATE_CONNECTED){
 		  
 			  // Subscribe to a topic
-			  strcpy(sub_topic,"actuator");
+			  strcpy(sub_topic,"CO2");
 
 			  status = mqtt_subscribe(&conn, NULL, sub_topic, MQTT_QOS_LEVEL_0);
 
-			  printf("Subscribing!\n");
+			  printf("Subscribing to topic CO2 for simulation purposes!\n");
 			  if(status == MQTT_STATUS_OUT_QUEUE_FULL) {
 				LOG_ERR("Tried to subscribe but command queue was full!\n");
 				PROCESS_EXIT();
@@ -237,11 +310,13 @@ PROCESS_THREAD(mqtt_client_process, ev, data)
 			  
 		if(state == STATE_SUBSCRIBED){
 			// Publish something
-		    sprintf(pub_topic, "%s", "status");
+		    sprintf(pub_topic, "%s", "pH");
 			
-			sprintf(app_buffer, "report %d", value);
+			change_pH_simulation(0);
+
+			// Since the precision of the pH sensor is limeted to +=0.01 then are sent just the first two digit of the fractional part
+			sprintf(app_buffer, "{\"pH\":%.2f}", pH_value);
 			
-			value++;
 				
 			mqtt_publish(&conn, NULL, pub_topic, (uint8_t *)app_buffer,
                strlen(app_buffer), MQTT_QOS_LEVEL_0, MQTT_RETAIN_OFF);

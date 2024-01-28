@@ -1,0 +1,16 @@
+<?xml version="1.0"  encoding="UTF-8"?>
+<!-- config.xsd -->
+
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="it.unipi.iot.configuration.ConfigurationParameters">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element type="xs:string" name="databaseIP"/>
+        <xs:element type="xs:integer" name="databasePort"/>
+        <xs:element type="xs:string" name="databaseUsername"/>
+        <xs:element type="xs:string" name="databasePassword"/>
+        <xs:element type="xs:string" name="databaseName"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>
