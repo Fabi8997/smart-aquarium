@@ -19,7 +19,6 @@ public class PHSample {
 	private float pHValue;
 	
 	
-	
 	/**
 	 * Constructor of the class PHSample; it casts the JSON string in input and initialize the pHValue with the value
 	 * associated to the key pH.<br>
@@ -60,14 +59,6 @@ public class PHSample {
 		JSONObject jsonObject = new JSONObject();
 		jsonObject.put("pH", this.pHValue);
 		return jsonObject.toJSONString();
-	}
-	
-	
-	/**
-	 * Method that allow to insert the sample inside the DB
-	 */
-	public void insertSampleDB() {
-		//TODO 
 	}
 	
 	
