@@ -13,16 +13,28 @@ import org.w3c.dom.*;
 import org.xml.sax.*;
 
 public class ConfigurationXML {
+	
+	//Path of the configuration file and its validation file
     private final String pathXML = "./config.xml";
     private final String pathXSD = "./config.xsd";
+    
+    //Object that will contain the configuration parameters read from the configuration file
     public ConfigurationParameters configurationParameters;
     
+    /**
+     * Constructor of the class.<br>
+     * It will validate the XML configuration file using its XSD schema, then the XML configuration file is deserialized 
+     * into a ConfigurationParameters class.
+     */
     public ConfigurationXML(){
        configurationParameters = new ConfigurationParameters();
        validateXML();
        deserializeXML();
     }
     
+    /**
+     * Deserialize the XML Configuration file into a ConfigurationParameters class.
+     */
     private void deserializeXML(){
         
     XStream xs = new XStream();
@@ -36,6 +48,9 @@ public class ConfigurationXML {
         configurationParameters = (ConfigurationParameters)xs.fromXML((x));
     }
     
+    /**
+     * Validate the XML configuration file using its XSD schema.
+     */
     private void validateXML(){
          
         try {  

@@ -1,4 +1,4 @@
-package it.unipi.iot.ph;
+package it.unipi.iot.kh;
 
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -10,22 +10,22 @@ import org.json.simple.parser.ParseException;
  * This class allows to parse the JSON string sent by the sensor and offers the methods to insert the sample inside the DB.
  */
 
-public class PHSample {
+public class KHSample {
 	
 	
 	/**
 	 * pH value present inside the JSON string sent by the sensor
 	 */
-	private float pHValue;
+	private float kHValue;
 	
 	
 	/**
-	 * Constructor of the class PHSample; it casts the JSON string in input and initialize the pHValue with the value
-	 * associated to the key pH.<br>
-	 * Example of a JSON String: 	{"pH": 7.53}
-	 * @param JSONString JSON string published in the topic "pH"
+	 * Constructor of the class KHSample; it casts the JSON string in input and initialize the kHValue with the value
+	 * associated to the key kH.<br>
+	 * Example of a JSON String: 	{"kH": 4.12}
+	 * @param JSONString JSON string published in the topic "kH"
 	 */
-	public PHSample(String JSONString) {
+	public KHSample(String JSONString) {
 		try {
 			
 		
@@ -33,10 +33,10 @@ public class PHSample {
 			JSONObject phJSONObject= (JSONObject) parser.parse(JSONString);
 			
 			//Initialize the value of pHValue with the value associated to the pH key
-			this.pHValue = new Float((Double)phJSONObject.get("pH"));
+			this.kHValue = new Float((Double)phJSONObject.get("kH"));
 			
 		} catch (ParseException e) {
-			System.out.println("[pHSample] Error during the parsing from JSON to pHSample object.");
+			System.out.println("[kHSample] Error during the parsing from JSON to kHSample object.");
 			e.printStackTrace();
 		}
 	}
@@ -44,11 +44,11 @@ public class PHSample {
 	
 
 	/**
-	 * Getter that returns the pH value of the sample
-	 * @return pH value
+	 * Getter that returns the kH value of the sample
+	 * @return kH value
 	 */
-	public float getpHValue() {
-		return pHValue;
+	public float getkHValue() {
+		return kHValue;
 	}
 
 
@@ -57,7 +57,7 @@ public class PHSample {
 	@Override
 	public String toString() {
 		JSONObject jsonObject = new JSONObject();
-		jsonObject.put("pH", this.pHValue);
+		jsonObject.put("kH", this.kHValue);
 		return jsonObject.toJSONString();
 	}
 	

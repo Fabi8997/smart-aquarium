@@ -48,8 +48,8 @@ static uint8_t state;
 #define STATE_DISCONNECTED    5
 
 /*---------------------------------------------------------------------------*/
-PROCESS_NAME(mqtt_client_process);
-AUTOSTART_PROCESSES(&mqtt_client_process);
+PROCESS_NAME(mqtt_temperature_process);
+AUTOSTART_PROCESSES(&mqtt_temperature_process);
 
 /*---------------------------------------------------------------------------*/
 /* Maximum TCP segment size for outgoing segments of our socket */
@@ -65,8 +65,6 @@ AUTOSTART_PROCESSES(&mqtt_client_process);
 static char client_id[BUFFER_SIZE];
 static char pub_topic[BUFFER_SIZE];
 static char sub_topic[BUFFER_SIZE];
-
-static int value = 0;
 
 // Periodic timer to check the state of the MQTT client
 #define STATE_MACHINE_PERIODIC     (CLOCK_SECOND >> 1)
@@ -85,7 +83,7 @@ static struct mqtt_message *msg_ptr = 0;
 static struct mqtt_connection conn;
 
 /*---------------------------------------------------------------------------*/
-PROCESS(mqtt_client_process, "MQTT Client");
+PROCESS(mqtt_temperature_process, "MQTT temperature Client");
 
 
 
@@ -97,10 +95,13 @@ pub_handler(const char *topic, uint16_t topic_len, const uint8_t *chunk,
   printf("Pub Handler: topic='%s' (len=%u), chunk_len=%u\n", topic,
           topic_len, chunk_len);
 
-  if(strcmp(topic, "actuator") == 0) {
-    printf("Received Actuator command\n");
+  if(strcmp(topic, "temperatureController") == 0) {
+    printf("temperatureController\n");
 	printf("%s\n", chunk);
-    // Do something :)
+
+    //TODO Do something :)
+    // Set the temperature_controller_status to the value contained in the payload!
+
     return;
   }
 }
@@ -110,16 +111,16 @@ mqtt_event(struct mqtt_connection *m, mqtt_event_t event, void *data)
 {
   switch(event) {
   case MQTT_EVENT_CONNECTED: {
-    printf("Application has a MQTT connection\n");
+    printf("[temperature device] Application has a MQTT connection\n");
 
     state = STATE_CONNECTED;
     break;
   }
   case MQTT_EVENT_DISCONNECTED: {
-    printf("MQTT Disconnect. Reason %u\n", *((mqtt_event_t *)data));
+    printf("[temperature device] MQTT Disconnect. Reason %u\n", *((mqtt_event_t *)data));
 
     state = STATE_DISCONNECTED;
-    process_poll(&mqtt_client_process);
+    process_poll(&mqtt_temperature_process);
     break;
   }
   case MQTT_EVENT_PUBLISH: {
@@ -134,25 +135,25 @@ mqtt_event(struct mqtt_connection *m, mqtt_event_t event, void *data)
     mqtt_suback_event_t *suback_event = (mqtt_suback_event_t *)data;
 
     if(suback_event->success) {
-      printf("Application is subscribed to topic successfully\n");
+      printf("[temperature device] Application is subscribed to topic successfully\n");
     } else {
-      printf("Application failed to subscribe to topic (ret code %x)\n", suback_event->return_code);
+      printf("[temperature device] Application failed to subscribe to topic (ret code %x)\n", suback_event->return_code);
     }
 #else
-    printf("Application is subscribed to topic successfully\n");
+    printf("[temperature device] Application is subscribed to topic successfully\n");
 #endif
     break;
   }
   case MQTT_EVENT_UNSUBACK: {
-    printf("Application is unsubscribed to topic successfully\n");
+    printf("[temperature device] Application is unsubscribed to topic successfully\n");
     break;
   }
   case MQTT_EVENT_PUBACK: {
-    printf("Publishing complete.\n");
+    printf("[temperature device] Publishing complete.\n");
     break;
   }
   default:
-    printf("Application got a unhandled MQTT event: %i\n", event);
+    printf("[temperature device] Application got a unhandled MQTT event: %i\n", event);
     break;
   }
 }
@@ -168,7 +169,87 @@ have_connectivity(void)
 }
 
 /*---------------------------------------------------------------------------*/
-PROCESS_THREAD(mqtt_client_process, ev, data)
+/*----------------------------------SIMULATION-------------------------------*/
+/*---------------------------------------------------------------------------*/
+
+
+/*Initialized the value of the temperature to the value at the center of the interval*/
+static float temperature_value = 25.0;
+
+/*Extreme of the safe interval for the temperature (to be used for leds)*/
+//static float min_temperature_value = 23.0;
+//static float max_temperature_value = 27.0;
+
+/*Values used respectively to define the upper bound of the possible variation interval and for the standard pH
+  variation in case of stabilization using CO2*/
+static float max_temperature_variation = 0.2;
+static float temperature_variation_temperature_controller = 0.05;
+
+//TODO change with variation of temperature
+/*If CO2_variation = 0 => no stabilization of pH active (START STATE)
+  if CO2_variation = -1 => the CO2 erogation tries to reduce the pH gradually
+  if CO2_variation = 1 => the CO2 erogation tries to increase the pH gradually
+
+  NOTE: for simulation purposes this value is changed based on the value publiced in the topic related to the CO2
+	changes, that is a topic created ONLY to make the simulation coherent. 
+*/
+
+//static int CO2_variation = 0;
+
+/*The following function is used to simulate the changes of the temperature sensed by the temperature device; it require a parameter
+  that indicates if the temperature controller is active increase/reduce the temperature value.*/
+static void change_temperature_simulation(int temperature_controller){
+
+	
+	/*If no change in the erogation of CO2 is active, so random behaviour*/
+	if(temperature_controller == 0){
+		/*Generate an integer belonging to the set {0,1,2} to take a decision for the simulation*/
+		int decision = rand() % 3;
+
+		/*Generate a float in the interval [0.0, 0.5] used to vary the temperature*/
+		//float temperature_variation = (float)rand()/(float)(RAND_MAX/max_temperature_variation);
+
+		//Add or dec temperature in blocks of 0.2
+		switch(decision){
+			/*No variation*/
+			case 0:{
+				break;
+			}
+			/*Increment the temperature*/
+			case 1:{
+				temperature_value += max_temperature_variation;
+				break;
+			}
+			/*Decrease the temperature*/
+			case 2:{
+				temperature_value -= max_temperature_variation;
+				break;
+			}			
+		}
+	/*The temperature controller tries to reduce the temperature value,
+	 it is done to keep the temperature inside the interval in which the pH can be modified, since the CO2 erogated is dependanto on the temperature*/
+	}else if(temperature_controller == -1){
+		temperature_value -= temperature_variation_temperature_controller;
+
+	/*The osmotic water erogation tries to increase the temperature value,
+	 it is done to keep the temperature inside the interval in which the pH can be modified, since the CO2 erogated is dependanto on the temperature*/
+	} else if(temperature_controller == 1){
+		temperature_value += temperature_variation_temperature_controller;
+	}
+}
+
+/*TODO custom behavior of each sensor*/
+/*TODO: add the CO2 behaviour both here and in the MQTTCollector;
+        maybe before I have to implement the database part! in this way
+	the mqtt network can be completed without problems.
+	Cambiamenti dati dalla CO2 proporzionali al kH????? maggiore è il kh
+	minore sarà il cambiamento del pH, molto bella come idea*/
+
+/*---------------------------------------------------------------------------*/
+/*---------------------------------------------------------------------------*/
+/*---------------------------------------------------------------------------*/
+
+PROCESS_THREAD(mqtt_temperature_process, ev, data)
 {
 
   PROCESS_BEGIN();
@@ -176,7 +257,7 @@ PROCESS_THREAD(mqtt_client_process, ev, data)
   mqtt_status_t status;
   char broker_address[CONFIG_IP_ADDR_STR_LEN];
 
-  printf("MQTT Client Process\n");
+  printf("MQTT temperature Process\n");
 
   // Initialize the ClientID as MAC address
   snprintf(client_id, BUFFER_SIZE, "%02x%02x%02x%02x%02x%02x",
@@ -185,7 +266,7 @@ PROCESS_THREAD(mqtt_client_process, ev, data)
                      linkaddr_node_addr.u8[6], linkaddr_node_addr.u8[7]);
 
   // Broker registration					 
-  mqtt_register(&conn, &mqtt_client_process, client_id, mqtt_event,
+  mqtt_register(&conn, &mqtt_temperature_process, client_id, mqtt_event,
                   MAX_TCP_SEGMENT_SIZE);
 				  
   state=STATE_INIT;
@@ -208,7 +289,7 @@ PROCESS_THREAD(mqtt_client_process, ev, data)
 		  
 		  if(state == STATE_NET_OK){
 			  // Connect to MQTT server
-			  printf("Connecting!\n");
+			  printf("[temperature device] Connecting to the MQTT server!\n");
 			  
 			  memcpy(broker_address, broker_ip, strlen(broker_ip));
 			  
@@ -221,13 +302,13 @@ PROCESS_THREAD(mqtt_client_process, ev, data)
 		  if(state==STATE_CONNECTED){
 		  
 			  // Subscribe to a topic
-			  strcpy(sub_topic,"actuator");
+			  strcpy(sub_topic,"temperatureController");
 
 			  status = mqtt_subscribe(&conn, NULL, sub_topic, MQTT_QOS_LEVEL_0);
 
-			  printf("Subscribing!\n");
+			  printf("[temperature device] Subscribing to topic osmoticWater for simulation purposes!\n");
 			  if(status == MQTT_STATUS_OUT_QUEUE_FULL) {
-				LOG_ERR("Tried to subscribe but command queue was full!\n");
+				LOG_ERR("[temperature device] Tried to subscribe but command queue was full!\n");
 				PROCESS_EXIT();
 			  }
 			  
@@ -237,17 +318,20 @@ PROCESS_THREAD(mqtt_client_process, ev, data)
 			  
 		if(state == STATE_SUBSCRIBED){
 			// Publish something
-		    sprintf(pub_topic, "%s", "status");
+		    sprintf(pub_topic, "%s", "temperature");
 			
-			sprintf(app_buffer, "report %d", value);
+			//TODO pass the global var osmotic_water_status
+			change_temperature_simulation(0);
+
+			// Since the precision of the temperature sensor is limeted to +=0.1 then are sent just the first two digit of the fractional part
+			sprintf(app_buffer, "{\"temperature\":%.1f}", temperature_value);
 			
-			value++;
 				
 			mqtt_publish(&conn, NULL, pub_topic, (uint8_t *)app_buffer,
                strlen(app_buffer), MQTT_QOS_LEVEL_0, MQTT_RETAIN_OFF);
 		
 		} else if ( state == STATE_DISCONNECTED ){
-		   LOG_ERR("Disconnected form MQTT broker\n");	
+		   LOG_ERR("[temperature device] Disconnected from MQTT broker\n");	
 		   // Recover from error
 		}
 		
