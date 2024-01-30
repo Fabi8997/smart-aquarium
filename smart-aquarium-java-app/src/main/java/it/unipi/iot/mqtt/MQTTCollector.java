@@ -8,7 +8,9 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 
 import it.unipi.iot.configuration.ConfigurationParameters;
 import it.unipi.iot.database.DatabaseManager;
+import it.unipi.iot.kh.KHSample;
 import it.unipi.iot.ph.PHSample;
+import it.unipi.iot.temperature.TemperatureSample;
 
 
 /**
@@ -18,13 +20,23 @@ import it.unipi.iot.ph.PHSample;
  */
 public class MQTTCollector implements MqttCallback {
 	
+	//Topic to retrieve the data published by the sensors
 	private final String pHTopic;
+	private final String kHTopic;
+	private final String temperatureTopic;
+	
+	//Names of the tables in which will be stored the samples
 	private final String pHDatabaseTableName;
+	private final String kHDatabaseTableName;
+	private final String temperatureDatabaseTableName;
+	
+	//DB manager to set up the connection to the DB and to query it
 	private final DatabaseManager db;
+	
+    //Parameters of the MQTT broker and MQTT client
 	private final String broker;
 	private final String clientId;
 	
-	//TODO To add temperature and the other topic
 	
 	/**
 	 * Constructor of the class MQTT Collector. <br> It reads the configuration parameters read from the configuration file config.xml
@@ -37,16 +49,24 @@ public class MQTTCollector implements MqttCallback {
 	 */
 	public MQTTCollector(ConfigurationParameters configurationParameters, DatabaseManager db) throws MqttException {
 		
-		//Assign the passed db to the db manager of the class MQTT to be used in the callback
+		//Assign the passed DB to the DB manager of the class MQTT to be used in the callback
 		this.db = db;
 		
-		//Retrieve the values from the configuration file
+		//Retrieve the values from the configuration file 
 		this.pHTopic = configurationParameters.pHTopic;
-        this.broker = configurationParameters.MQTTBroker;
-        this.clientId = configurationParameters.MQTTClientId;
-		this.pHDatabaseTableName = configurationParameters.pHDatabaseTableName;
+		this.kHTopic = configurationParameters.kHTopic;
+		this.temperatureTopic = configurationParameters.temperatureTopic;
 		
 
+		this.pHDatabaseTableName = configurationParameters.pHDatabaseTableName;
+		this.kHDatabaseTableName = configurationParameters.kHDatabaseTableName;
+		this.temperatureDatabaseTableName = configurationParameters.temperatureDatabaseTableName;
+		
+        this.broker = configurationParameters.MQTTBroker;
+        this.clientId = configurationParameters.MQTTClientId;
+		
+
+        //Connect the mqttClient to the broker
 		MqttClient mqttClient = new MqttClient(broker, clientId);
         System.out.println("[MQTTManager] Connecting to broker: "+broker);
         
@@ -56,6 +76,12 @@ public class MQTTCollector implements MqttCallback {
         
         //Subscribe to the pH topic
         mqttClient.subscribe(pHTopic);
+        
+        //Subscribe to the kH topic
+        mqttClient.subscribe(kHTopic);
+        
+        //Subscribe to the temperature topic
+        mqttClient.subscribe(temperatureTopic);
         
         // TODO GITIGNORE FOR THE BUILDS!!!
 	}
@@ -78,11 +104,44 @@ public class MQTTCollector implements MqttCallback {
 			//DEBUG
 			//System.out.println(String.format("[%s] %s", topic, pHSample));
 			
-			//Insert in the table passed as first argument the ph value passed as second argument
+			//Insert in the table passed as first argument the pH value passed as second argument
 			db.insertSample(this.pHDatabaseTableName, pHSample.getpHValue() );
 			
 			//LOG
 			System.out.println("[MQTTCollector] Inserted " + pHSample + " in " + this.pHDatabaseTableName + "." );
+		
+		}else if(topic.equals(kHTopic)) {
+			
+			//Create a pH sample object passing the JSON document
+			KHSample kHSample = new KHSample(new String(message.getPayload()));
+
+			//DEBUG
+			//System.out.println(String.format("[%s] %s", topic, kHSample));
+			
+			//Insert in the table passed as first argument the kH value passed as second argument
+			db.insertSample(this.kHDatabaseTableName, kHSample.getkHValue() );
+			
+			//LOG
+			System.out.println("[MQTTCollector] Inserted " + kHSample + " in " + this.kHDatabaseTableName + "." );
+			
+			
+		}else if(topic.equals(temperatureTopic)) {
+					
+			//Create a pH sample object passing the JSON document
+			TemperatureSample temperatureSample = new TemperatureSample(new String(message.getPayload()));
+
+			//DEBUG
+			//System.out.println(String.format("[%s] %s", topic, temperatureSample));
+			
+			//Insert in the table passed as first argument the temperature value passed as second argument
+			db.insertSample(this.temperatureDatabaseTableName, temperatureSample.getTemperatureValue() );
+			
+			//LOG
+			System.out.println("[MQTTCollector] Inserted " + temperatureSample + " in " + this.temperatureDatabaseTableName + "." );
+		}else {
+			//LOG
+			System.out.println("[MQTTCollector] " + String.format("[%s] %s", topic,new String(message.getPayload()) ));
+
 		}
 	}
 

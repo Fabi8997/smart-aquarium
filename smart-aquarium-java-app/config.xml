@@ -6,7 +6,11 @@
 	<databasePassword>root</databasePassword>
 	<databaseName>smart_aquarium</databaseName>
 	<pHDatabaseTableName>PH</pHDatabaseTableName>
+	<kHDatabaseTableName>KH</kHDatabaseTableName>
+	<temperatureDatabaseTableName>Temperature</temperatureDatabaseTableName>
 	<MQTTBroker>tcp://127.0.0.1:1883</MQTTBroker>
 	<MQTTClientId>SmartAquariumMQTTCollector</MQTTClientId>
 	<pHTopic>pH</pHTopic>
+	<kHTopic>kH</kHTopic>
+	<temperatureTopic>temperature</temperatureTopic>
 </it.unipi.iot.configuration.ConfigurationParameters>

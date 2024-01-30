@@ -11,9 +11,13 @@
         <xs:element type="xs:string" name="databasePassword"/>
         <xs:element type="xs:string" name="databaseName"/>
         <xs:element type="xs:string" name="pHDatabaseTableName"/>
+        <xs:element type="xs:string" name="kHDatabaseTableName"/>
+        <xs:element type="xs:string" name="temperatureDatabaseTableName"/>
         <xs:element type="xs:string" name="MQTTBroker"/>
         <xs:element type="xs:string" name="MQTTClientId"/>
         <xs:element type="xs:string" name="pHTopic"/>
+        <xs:element type="xs:string" name="kHTopic"/>
+        <xs:element type="xs:string" name="temperatureTopic"/>
       </xs:sequence>
     </xs:complexType>
   </xs:element>
