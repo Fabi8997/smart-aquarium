@@ -5,6 +5,7 @@ import org.eclipse.paho.client.mqttv3.MqttException;
 import it.unipi.iot.configuration.ConfigurationXML;
 import it.unipi.iot.database.DatabaseManager;
 import it.unipi.iot.mqtt.MQTTCollector;
+import it.unipi.iot.coap.CoAPNetworkController;
 
 /**
  * 
@@ -37,6 +38,12 @@ public class SmartAquariumApp {
 
             me.printStackTrace();
         }
+		
+		System.out.println("[SMART AQUARIUM] Launching the CoAP Network Manager...");
+		
+		CoAPNetworkController coapNetworkController = new CoAPNetworkController(configurationXML.configurationParameters);
+		coapNetworkController.start();
+		
 	}
 
 }
