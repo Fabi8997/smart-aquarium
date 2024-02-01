@@ -10,7 +10,9 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
+import it.unipi.iot.coap.CO2.CO2Dispenser;
 import it.unipi.iot.coap.osmoticwater.OsmoticWaterTank;
+import it.unipi.iot.coap.temperature.TemperatureController;
 import it.unipi.iot.configuration.ConfigurationParameters;
 
 
@@ -25,7 +27,12 @@ import it.unipi.iot.configuration.ConfigurationParameters;
  */
 public class CoAPNetworkController extends CoapServer {
 	
+	//CoAP Clients
 	OsmoticWaterTank osmoticWaterTank;
+	TemperatureController temperatureController;
+	CO2Dispenser co2Dispenser;
+	
+	//ConfigurationParameters
 	ConfigurationParameters configurationParameters;
 	
 	public CoAPNetworkController(ConfigurationParameters configurationParameters) {
@@ -58,32 +65,105 @@ public class CoAPNetworkController extends CoapServer {
 			exchange.respond(response);
 	 	}
 	 	
+	 	/**
+	 	 * Handles the POST request in the given CoAPExchange. It creates CoAP client to interact with the registered devices.
+	 	 */
 		public void handlePOST(CoapExchange exchange) {
 			
-			System.out.println("Received " + exchange.getRequestText());
+			System.out.println("[CoAPNetworkController] new message received: " + exchange.getRequestText());
+			
+			//Retrieve the ipAddress of the sender
 			String ipAddress = exchange.getSourceAddress().getHostAddress();
+			
+			//To contain the device name
 			String device = null;
+			
+			//Objects to handle the JSON format
 			JSONParser parser = new JSONParser();
 			JSONObject requestTextJSON;
 			
 			try {
+				//Parse the payload of the request
 				requestTextJSON = (JSONObject) parser.parse(exchange.getRequestText());
+				
+				//Retrieve the value associated to the key "device"
 				device = (String) requestTextJSON.get("device");
+				
 			} catch (ParseException e) {
+				
+				//If the JSON document is malformed send BAD_REQUEST response
 				exchange.respond(ResponseCode.BAD_REQUEST);
 				e.printStackTrace();
 			}
 			
+			//Check the device value and create a new CoAP Client accordingly
 			if(device.equals("osmoticWaterTank")) {
-				osmoticWaterTank = new OsmoticWaterTank(ipAddress,configurationParameters);
 				
-				System.out.println("[CoAPNetworkController] new " + device + " registered!");
-				
-				exchange.respond(ResponseCode.CREATED);
-			}
+				//If no device already registered
+				if(osmoticWaterTank == null) {
 					
-			//exchange.respond(response);
+					//Create a new CoAP Client
+					osmoticWaterTank = new OsmoticWaterTank(ipAddress,configurationParameters);
+					
+					System.out.println("[CoAPNetworkController] new " + device + " registered!");
+					
+					//Set the response code and the payload message
+					exchange.respond(ResponseCode.CREATED, "registered");
+				}else {
+					
+					System.out.println("[CoAPNetworkController] " + device + " already registered!");
+					
+					//Device already registered
+					exchange.respond(ResponseCode.BAD_REQUEST);
+				}
+				
+				
+			} else if(device.equals("CO2Dispenser")) {
+				
+				//If no device already registered
+				if(co2Dispenser == null) {
+					
+					//Create a new CoAP Client
+					co2Dispenser = new CO2Dispenser(ipAddress,configurationParameters);
+				
+					System.out.println("[CoAPNetworkController] new " + device + " registered!");
+					
+					//Set the response code and the payload message
+					exchange.respond(ResponseCode.CREATED, "registered");
+				}else {
+					
+					System.out.println("[CoAPNetworkController] " + device + " already registered!");
+					
+					//Device already registered
+					exchange.respond(ResponseCode.BAD_REQUEST);
+				}
+				
+				
+			}else if(device.equals("temperatureController")) {
+				
+				//If no device already registered
+				if(temperatureController == null) {
+					
+					//Create a new CoAP Client
+					temperatureController = new TemperatureController(ipAddress,configurationParameters);
+					
+					System.out.println("[CoAPNetworkController] new " + device + " registered!");
+					
+					//Set the response code and the payload message
+					exchange.respond(ResponseCode.CREATED, "registered");
+				}else {
+					
+					System.out.println("[CoAPNetworkController] " + device + " already registered!");
+					
+					//Device already registered
+					exchange.respond(ResponseCode.BAD_REQUEST);
+				}
+				
+			}else {
+				
+				//IF IT REACHES THIS POINT SOMETHING IN THE REQUEST IS WRONG
+				exchange.respond(ResponseCode.BAD_REQUEST);
+			}
 	 	}
-
 	}
 }

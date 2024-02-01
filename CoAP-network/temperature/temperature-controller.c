@@ -11,7 +11,7 @@
 
 /* Log configuration */
 #include "sys/log.h"
-#define LOG_MODULE "omsotic water tank"
+#define LOG_MODULE "temperature controller"
 #define LOG_LEVEL LOG_LEVEL_INFO
 
 // Define the server
@@ -34,8 +34,8 @@ static bool connected = false;
 static bool registered = false;
 
 /* Declare and auto-start this file's process */
-PROCESS(osmotic_water_device, "Osmotic water tank");
-AUTOSTART_PROCESSES(&osmotic_water_device);
+PROCESS(temperature_controller, "Temperature controller");
+AUTOSTART_PROCESSES(&temperature_controller);
 
 
 // Timers used to make the tries for the connection and registration
@@ -82,7 +82,7 @@ void client_chunk_handler(coap_message_t *response)
 }
 
 /*---------------------------------------------------------------------------*/
-PROCESS_THREAD(osmotic_water_device, ev, data)
+PROCESS_THREAD(temperature_controller, ev, data)
 {
   //Represent the endpoint
   static coap_endpoint_t server_ep;
@@ -102,6 +102,7 @@ PROCESS_THREAD(osmotic_water_device, ev, data)
   //Led yellow to notify that the device is not connected yet
   leds_toggle(LEDS_YELLOW);
 
+  //TODO Activate the resource!!
   //coap_activate_resource(&res_leds, "led");
 
   LOG_INFO(" Connectiong to the Border Router... \n");
@@ -142,7 +143,7 @@ PROCESS_THREAD(osmotic_water_device, ev, data)
 	//Prepare the message
 	coap_init_message(request, COAP_TYPE_CON, COAP_POST, 0);
 	coap_set_header_uri_path(request, service_url);
-	const char msg[] = "{\"device\":\"osmoticWaterTank\"}";
+	const char msg[] = "{\"device\":\"temperatureController\"}";
 
 	//Set the payload
 	coap_set_payload(request, (uint8_t *)msg, sizeof(msg) - 1);
@@ -150,7 +151,6 @@ PROCESS_THREAD(osmotic_water_device, ev, data)
 	//Issue the request in a blocking manner
 	COAP_BLOCKING_REQUEST(&server_ep, request, client_chunk_handler);
 
-	//Send the msg {"device":"osmoticWaterTank"}
   }
 
   
