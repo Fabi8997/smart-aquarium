@@ -104,7 +104,7 @@ PROCESS_THREAD(co2_dispenser, ev, data)
 
   //coap_activate_resource(&res_leds, "led");
 
-  LOG_INFO(" Connectiong to the Border Router... \n");
+  LOG_INFO("Connectiong to the Border Router... \n");
 
   while(!connected){
 	//Wait CONNECTION_INTERVAL seconds to check if there is a connection to the BR
@@ -112,7 +112,7 @@ PROCESS_THREAD(co2_dispenser, ev, data)
 
 	//Check if there is a connection with the BR
 	if(NETSTACK_ROUTING.node_is_reachable()){
-		LOG_INFO(" Connected to the Border Router! \n");
+		LOG_INFO("Connected to the Border Router! \n");
 
 		//Set the flag to signal the end of the connection
 		connected = true;
@@ -127,7 +127,7 @@ PROCESS_THREAD(co2_dispenser, ev, data)
 	}
   }
 
-  LOG_INFO(" Registering to the CoAP Network Controller... \n");
+  LOG_INFO("Registering to the CoAP Network Controller... \n");
   
   //Start the registration timer
   etimer_set( &wait_registration, CLOCK_SECOND * REGISTRATION_INTERVAL);
@@ -153,7 +153,7 @@ PROCESS_THREAD(co2_dispenser, ev, data)
   }
 
   
-  LOG_INFO(" Device started correctly!\n");
+  LOG_INFO("Device started correctly!\n");
 
   PROCESS_END();
 }

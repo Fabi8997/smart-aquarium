@@ -23,6 +23,7 @@
 
 // Define the resource
 //extern coap_resource_t res_leds;
+extern coap_resource_t res_hello;
 
 // Service URL
 char *service_url = "/registration";
@@ -102,9 +103,9 @@ PROCESS_THREAD(osmotic_water_device, ev, data)
   //Led yellow to notify that the device is not connected yet
   leds_toggle(LEDS_YELLOW);
 
-  //coap_activate_resource(&res_leds, "led");
+  coap_activate_resource(&res_hello, "test/hello");
 
-  LOG_INFO(" Connectiong to the Border Router... \n");
+  LOG_INFO("Connectiong to the Border Router... \n");
 
   while(!connected){
 	//Wait CONNECTION_INTERVAL seconds to check if there is a connection to the BR
@@ -112,7 +113,7 @@ PROCESS_THREAD(osmotic_water_device, ev, data)
 
 	//Check if there is a connection with the BR
 	if(NETSTACK_ROUTING.node_is_reachable()){
-		LOG_INFO(" Connected to the Border Router! \n");
+		LOG_INFO("Connected to the Border Router! \n");
 
 		//Set the flag to signal the end of the connection
 		connected = true;
@@ -127,7 +128,7 @@ PROCESS_THREAD(osmotic_water_device, ev, data)
 	}
   }
 
-  LOG_INFO(" Registering to the CoAP Network Controller... \n");
+  LOG_INFO("Registering to the CoAP Network Controller... \n");
   
   //Start the registration timer
   etimer_set( &wait_registration, CLOCK_SECOND * REGISTRATION_INTERVAL);
@@ -154,7 +155,11 @@ PROCESS_THREAD(osmotic_water_device, ev, data)
   }
 
   
-  LOG_INFO(" Device started correctly!\n");
+  LOG_INFO("Device started correctly!\n");
+  
+  while(1){
+	PROCESS_WAIT_EVENT();
+  }
 
   PROCESS_END();
 }

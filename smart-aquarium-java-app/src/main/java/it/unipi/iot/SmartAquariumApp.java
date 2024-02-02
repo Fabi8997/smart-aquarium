@@ -39,10 +39,37 @@ public class SmartAquariumApp {
             me.printStackTrace();
         }
 		
-		System.out.println("[SMART AQUARIUM] Launching the CoAP Network Manager...");
+		System.out.println("\n[SMART AQUARIUM] Launching the CoAP Network Manager...\n");
 		
+		//Create a new CoAP Server to handle the CoAP network
 		CoAPNetworkController coapNetworkController = new CoAPNetworkController(configurationXML.configurationParameters);
+		
+		//Start the CoAP Server
 		coapNetworkController.start();
+		
+		System.out.println("[SMART AQUARIUM] Waiting for the registration of all the devices...");
+		
+		//Wait until all the devices are registered
+		while(!coapNetworkController.allDevicesRegistered()) {
+			try {
+				
+				//Sleep for 5 seconds to wait for registration
+				Thread.sleep(5000);
+			} catch (InterruptedException e) {
+				
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		
+		System.out.println("[SMART AQUARIUM] All the devices are registered to the CoAP Network Controller");
+		try {
+			Thread.sleep(5000);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		System.out.println("response: " + coapNetworkController.getOsmoticWaterTank().get().getResponseText());
 		
 	}
 

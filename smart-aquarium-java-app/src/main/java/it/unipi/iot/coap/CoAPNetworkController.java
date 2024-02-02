@@ -35,22 +35,64 @@ public class CoAPNetworkController extends CoapServer {
 	//ConfigurationParameters
 	ConfigurationParameters configurationParameters;
 	
+	/**
+	 * Constructs a CoAP server. <br>
+	 * Add the registration resource to be handled by the server.
+	 * @param configurationParameters
+	 */
 	public CoAPNetworkController(ConfigurationParameters configurationParameters) {
 		super();
 		this.add(new CoAPRegistrationResource("registration"));
 		this.configurationParameters = configurationParameters;
 	}
 	
-	
-	
+	/**
+	 * Getter
+	 * @return CoAP Client for the osmotic water tank
+	 */
+	public OsmoticWaterTank getOsmoticWaterTank() {
+		return osmoticWaterTank;
+	}
 
+	/**
+	 * Getter
+	 * @return CoAP Client for the temperature controller
+	 */
+	public TemperatureController getTemperatureController() {
+		return temperatureController;
+	}
+
+	/**
+	 * Getter
+	 * @return CoAP Client for the CO2 dispenser
+	 */
+	public CO2Dispenser getCo2Dispenser() {
+		return co2Dispenser;
+	}
+
+	public boolean allDevicesRegistered() {
+		return ((osmoticWaterTank != null) && (temperatureController != null) && (co2Dispenser != null));
+	}
+
+	/**
+	 * 
+	 * @author Fabi8997
+	 *
+	 *	Registration resource. It defines the methods to handle the POST requests coming from the devices that want to register to the 
+	 *  application.
+	 */
 	private class CoAPRegistrationResource extends CoapResource {
 
+		/**
+		 * Construct a new resource with the specified name.
+		 * @param name of the resource to be created.
+		 */
 		public CoAPRegistrationResource(String name) {
 			super(name);
-			setObservable(true);
+			//setObservable(true); USELESS?
 	 	}
 		
+		//TODO GET handle, but maybe it is not required
 	 	public void handleGET(CoapExchange exchange) {
 	 		
 	 		Response response = new Response(ResponseCode.CONTENT);
@@ -69,8 +111,8 @@ public class CoAPNetworkController extends CoapServer {
 	 	 * Handles the POST request in the given CoAPExchange. It creates CoAP client to interact with the registered devices.
 	 	 */
 		public void handlePOST(CoapExchange exchange) {
-			
-			System.out.println("[CoAPNetworkController] new message received: " + exchange.getRequestText());
+			//Debug
+			//System.out.println("[CoAPNetworkController] new message received: " + exchange.getRequestText());
 			
 			//Retrieve the ipAddress of the sender
 			String ipAddress = exchange.getSourceAddress().getHostAddress();
