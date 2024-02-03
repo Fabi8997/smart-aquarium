@@ -3,11 +3,14 @@
 #include "os/dev/leds.h"
 #include "sys/etimer.h"
 #include "os/dev/leds.h"
+#include "os/dev/button-hal.h"
 
 #include "routing/routing.h"
 
 #include "coap-engine.h"
 #include "coap-blocking-api.h"
+
+#include "osmotic-water-device-var.h"
 
 /* Log configuration */
 #include "sys/log.h"
@@ -23,9 +26,7 @@
 #define FLOW_INTERVAL 5
 
 // Define the resource
-//extern coap_resource_t res_leds;
 extern coap_resource_t res_tank;
-//extern coap_resource_t res_hello;
 
 
 // Service URL
@@ -46,6 +47,9 @@ AUTOSTART_PROCESSES(&osmotic_water_device);
 static struct etimer wait_connection;
 static struct etimer wait_registration;
 static struct etimer flow_timer;
+
+//Button to be used to signal the fill of the tank
+static button_hal_button_t *btn;
 
 
 /* This function is will be passed to COAP_BLOCKING_REQUEST() to handle responses. */
@@ -85,6 +89,7 @@ void client_chunk_handler(coap_message_t *response)
   }
 
 }
+
 
 /*---------------------------------------------------------------------------*/
 PROCESS_THREAD(osmotic_water_device, ev, data)
@@ -158,17 +163,63 @@ PROCESS_THREAD(osmotic_water_device, ev, data)
 	//Send the msg {"device":"osmoticWaterTank"}
   }
 
-  
   LOG_INFO("Device started correctly!\n");
   
+  //Set the timer that check if every FLOW_INTERVAL seconds an info about the resource must be sent to the server
   etimer_set( &flow_timer, CLOCK_SECOND * FLOW_INTERVAL);
+
+  
   while(1){
 
-	PROCESS_WAIT_EVENT();
+	//Wait for the expiration of the timer OR a button event
+	PROCESS_WAIT_EVENT_UNTIL( ev == PROCESS_EVENT_TIMER || ev == button_hal_periodic_event );
+	
+	//If the event is related to the timer then trigger the event resource
+	if(ev == PROCESS_EVENT_TIMER){
 
-	res_tank.trigger();
+		res_tank.trigger();
 
-	etimer_reset(&flow_timer);
+		//Reset the timer 
+		etimer_reset(&flow_timer);
+
+	}else if((ev == button_hal_periodic_event) && (to_be_filled == true)) {
+	//IF the button has been pressed AND the water tank must be filled		
+	  
+	  //Retrieve the data about the button
+	  btn = (button_hal_button_t *)data;
+
+          //Blink (every second the red blink during the pression)
+	  leds_toggle(LEDS_RED);
+
+	  //If it is pressed for 5 second it means that the water is filled
+	  if(btn->press_duration_seconds == 5) {
+		
+		  //Reset the boolean variable
+		  to_be_filled = false;
+
+	          //Put the tank to its maximum level
+		  tank_level = 5000.0;
+
+		  //Turn on the green led and turn off the red led
+		  leds_off(LEDS_RED);
+		  leds_on(LEDS_GREEN);
+	
+		  LOG_INFO("Tank filled correctly!\n");
+
+	  //At the release of the button check if the press duration is lower than 5
+	  }else if(ev == button_hal_release_event){
+
+		//Retrieve the data about the button
+		btn = (button_hal_button_t *)data;
+
+		//If the button was not pressed for sufficient time keep the red led on
+		if(btn->press_duration_seconds < 5){
+			leds_on(LEDS_RED);
+		}
+	  }
+ 	}
+
+	
   }
 
   PROCESS_END();

@@ -69,7 +69,16 @@ public class SmartAquariumApp {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		System.out.println("response: " + coapNetworkController.getOsmoticWaterTank().get().getResponseText());
+		//System.out.println("response: " + coapNetworkController.getOsmoticWaterTank().get().getResponseText());
+		
+		//TODO 
+		/*
+		 * Creare simulazine con sensore kh e water tank
+		 * Implementare l'invio del put on quando il kh <= lb or >= ub
+		 * Di conseguenza occorre salire gradualmente nella simulazione !!
+		 * 
+		 * L'app ogni tot controlla i valori!!
+		 */
 		
 	}
 

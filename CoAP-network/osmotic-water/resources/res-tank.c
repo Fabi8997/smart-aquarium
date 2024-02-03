@@ -1,9 +1,14 @@
 #include "contiki.h"
 #include "coap-engine.h"
+#include "dev/leds.h"
 
 #include <string.h>
 
 #include "sys/etimer.h"
+
+#include "osmotic-water-device-var.h"
+
+#if PLATFORM_HAS_LEDS || LEDS_COUNT
 
 /* Log configuration */
 #include "sys/log.h"
@@ -12,10 +17,13 @@
 
 static void res_put_handler(coap_message_t *request, coap_message_t *response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset);
 static void res_get_handler(coap_message_t *request, coap_message_t *response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset);
-static void res_event_handler(void);
+static void res_event_handler();
 
-bool flow = false;
+static bool flow = false;
 float tank_level = 5000.0;
+static float minimum_tank_level = 4700.0;
+bool to_be_filled = false;
+
 
 EVENT_RESOURCE(res_tank,
          "title=\"Tank resource",
@@ -24,7 +32,6 @@ EVENT_RESOURCE(res_tank,
          res_put_handler,
 	 NULL,
          res_event_handler);
-
 
 static void
 res_get_handler(coap_message_t *request, coap_message_t *response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset)
@@ -37,21 +44,48 @@ res_get_handler(coap_message_t *request, coap_message_t *response, uint8_t *buff
 
 static void res_put_handler(coap_message_t *request, coap_message_t *response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset)
 {
-
+  
   size_t len = 0;
   const char *mode = NULL;
   int success = 1;  
 
   LOG_INFO("Received put request\n");
+
+  //If the request has the mode variable
   if((len = coap_get_post_variable(request, "mode", &mode))) {
+
     LOG_DBG("mode %s\n", mode);
 
+    //If the mode is on
     if(strncmp(mode, "on", len) == 0) {
-      flow = true;
-      LOG_INFO("Osmotic water is flowing...\n");
+
+      //If the tank is filled
+      if(to_be_filled == false){
+
+	//Start the flow
+	flow = true;
+        LOG_INFO("Osmotic water is flowing...\n");
+	
+      }else{
+	LOG_INFO("The tank must be filled!\n");
+      }
+      
+    //If the mode is off
     } else if(strncmp(mode, "off", len) == 0) {
-      flow = false;
-      LOG_INFO("Osmotic water flow stopped.\n");
+
+      //If the tank is filled
+      if(to_be_filled == false){
+
+	//Stop the flow
+        flow = false;
+        LOG_INFO("Osmotic water flow stopped.\n");
+
+      //There is on flow, the tank must be filled
+      }else{
+	LOG_INFO("The tank must be filled!\n");
+      }
+
+    //Invalid value
     } else {
       success = 0;
     }
@@ -63,9 +97,20 @@ static void res_put_handler(coap_message_t *request, coap_message_t *response, u
 }
 
 static void res_event_handler(){
+
 	if(flow == true){
 		tank_level -= 100.0;
 		LOG_INFO("Level: %f\n", tank_level);
+		if ( tank_level <= minimum_tank_level){
+			LOG_INFO("Tank level too low! Flow stopped!");
+			flow = false;
+			to_be_filled = true;
+			leds_off(LEDS_GREEN);
+			leds_on(LEDS_RED);
+		}
+		
 		coap_notify_observers(&res_tank);
 	}
 }
+
+#endif /* PLATFORM_HAS_LEDS */
