@@ -1,6 +1,9 @@
 package it.unipi.iot.coap;
 
+import org.eclipse.californium.core.CoapHandler;
+import org.eclipse.californium.core.CoapObserveRelation;
 import org.eclipse.californium.core.CoapResource;
+import org.eclipse.californium.core.CoapResponse;
 import org.eclipse.californium.core.CoapServer;
 import org.eclipse.californium.core.coap.MediaTypeRegistry;
 import org.eclipse.californium.core.coap.Response;
@@ -29,6 +32,7 @@ public class CoAPNetworkController extends CoapServer {
 	
 	//CoAP Clients
 	OsmoticWaterTank osmoticWaterTank;
+	CoapObserveRelation observeTankRelation;
 	TemperatureController temperatureController;
 	CO2Dispenser co2Dispenser;
 	
@@ -146,6 +150,19 @@ public class CoAPNetworkController extends CoapServer {
 					
 					//Create a new CoAP Client
 					osmoticWaterTank = new OsmoticWaterTank(ipAddress,configurationParameters);
+					
+					//Create the observer relation
+					observeTankRelation = osmoticWaterTank.observe(
+							new CoapHandler() {
+								@Override public void onLoad(CoapResponse response) {
+									String content = response.getResponseText();
+									System.out.println(content);
+								}
+								@Override public void onError() {
+									System.err.println("-Failed--------");
+								}
+							});
+
 					
 					System.out.println("[CoAPNetworkController] new " + device + " registered!");
 					

@@ -20,10 +20,13 @@
 // Define the interval to wait before sending the new requests
 #define START_INTERVAL 5
 #define REGISTRATION_INTERVAL 1
+#define FLOW_INTERVAL 5
 
 // Define the resource
 //extern coap_resource_t res_leds;
-extern coap_resource_t res_hello;
+extern coap_resource_t res_tank;
+//extern coap_resource_t res_hello;
+
 
 // Service URL
 char *service_url = "/registration";
@@ -42,6 +45,7 @@ AUTOSTART_PROCESSES(&osmotic_water_device);
 // Timers used to make the tries for the connection and registration
 static struct etimer wait_connection;
 static struct etimer wait_registration;
+static struct etimer flow_timer;
 
 
 /* This function is will be passed to COAP_BLOCKING_REQUEST() to handle responses. */
@@ -103,7 +107,7 @@ PROCESS_THREAD(osmotic_water_device, ev, data)
   //Led yellow to notify that the device is not connected yet
   leds_toggle(LEDS_YELLOW);
 
-  coap_activate_resource(&res_hello, "test/hello");
+  coap_activate_resource(&res_tank, "tank");
 
   LOG_INFO("Connectiong to the Border Router... \n");
 
@@ -157,8 +161,14 @@ PROCESS_THREAD(osmotic_water_device, ev, data)
   
   LOG_INFO("Device started correctly!\n");
   
+  etimer_set( &flow_timer, CLOCK_SECOND * FLOW_INTERVAL);
   while(1){
+
 	PROCESS_WAIT_EVENT();
+
+	res_tank.trigger();
+
+	etimer_reset(&flow_timer);
   }
 
   PROCESS_END();
