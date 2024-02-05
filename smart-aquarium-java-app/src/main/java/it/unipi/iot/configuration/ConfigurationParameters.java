@@ -23,6 +23,10 @@ public class ConfigurationParameters {
 	public String osmoticWaterTankTopic;
 	public String temperatureControllerTopic;
 	public String co2DispenserTopic;
+	public float kHLowerBound;
+	public float kHUpperBound;
+	public float kHOptimalValue;
+	public float epsilon;
 	
 	@Override
 	public String toString() {

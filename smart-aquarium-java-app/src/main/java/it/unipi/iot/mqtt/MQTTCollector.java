@@ -129,6 +129,18 @@ public class MQTTCollector implements MqttCallback {
 		return currentTemperature;
 	}
 
+	public boolean isNewCurrentKH() {
+		return newCurrentKH;
+	}
+
+	public boolean isNewCurrentPH() {
+		return newCurrentPH;
+	}
+
+	public boolean isNewCurrentTemperature() {
+		return newCurrentTemperature;
+	}
+
 	/**
 	 * TODO
 	 * @param message

@@ -21,6 +21,10 @@
         <xs:element type="xs:string" name="osmoticWaterTankTopic"/>
         <xs:element type="xs:string" name="temperatureControllerTopic"/>
         <xs:element type="xs:string" name="co2DispenserTopic"/>
+        <xs:element type="xs:float" name="kHLowerBound"/>
+        <xs:element type="xs:float" name="kHUpperBound"/>
+        <xs:element type="xs:float" name="kHOptimalValue"/>
+        <xs:element type="xs:float" name="epsilon"/>
       </xs:sequence>
     </xs:complexType>
   </xs:element>

@@ -2,6 +2,7 @@ package it.unipi.iot;
 
 import org.eclipse.paho.client.mqttv3.MqttException;
 
+import it.unipi.iot.configuration.ConfigurationParameters;
 import it.unipi.iot.configuration.ConfigurationXML;
 import it.unipi.iot.database.DatabaseManager;
 import it.unipi.iot.mqtt.MQTTCollector;
@@ -14,21 +15,25 @@ import it.unipi.iot.coap.CoAPNetworkController;
  */
 public class SmartAquariumApp {
 
+	static boolean flow_active = false; //To be substituted by coapGETStatus
+	
 	public static void main(String[] args) throws MqttException {
 		System.out.println("[SMART AQUARIUM] Welcome to your Smart Aquarium!");
 		
 		//Load configuration parameters
 		System.out.println("[SMART AQUARIUM] Loading configuration parameters...");
 		ConfigurationXML configurationXML = new ConfigurationXML();
+		ConfigurationParameters configurationParameters = configurationXML.configurationParameters;
 		
-		System.out.println(configurationXML.configurationParameters);
+		System.out.println(configurationParameters);
 		
 		System.out.println("[SMART AQUARIUM] Connecting to the database...");
 		
 		//Initialize database manager using the configuration parameters
-		DatabaseManager db = new DatabaseManager(configurationXML.configurationParameters);
+		DatabaseManager db = new DatabaseManager(configurationParameters);
 		
-		MQTTCollector mqttCollector = new MQTTCollector(configurationXML.configurationParameters, db);
+		//Launch mqttCollector
+		MQTTCollector mqttCollector = new MQTTCollector(configurationParameters, db);
         
 		/*try {
         	//Launch mqttCollector
@@ -44,7 +49,7 @@ public class SmartAquariumApp {
 		System.out.println("\n[SMART AQUARIUM] Launching the CoAP Network Manager...\n");
 		
 		//Create a new CoAP Server to handle the CoAP network
-		CoAPNetworkController coapNetworkController = new CoAPNetworkController(configurationXML.configurationParameters);
+		CoAPNetworkController coapNetworkController = new CoAPNetworkController(configurationParameters);
 		
 		//Start the CoAP Server
 		coapNetworkController.start();
@@ -71,34 +76,35 @@ public class SmartAquariumApp {
 		
 		//TODO 
 		
-		boolean flow_active = false; //To be substituted by coapGETStatus
 		while(true) {
 			try {
-				Thread.sleep(15000);
+				Thread.sleep(15000);//ADD in configuration the 
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 			
-			
-			if(((mqttCollector.getCurrentKH()) < 3) && !flow_active) {
-				mqttCollector.simulateOsmoticWaterTank("INC");
-				flow_active = true;
-			}else if ((mqttCollector.getCurrentKH() > 5 ) && !flow_active) {
-				mqttCollector.simulateOsmoticWaterTank("DEC");
-				flow_active = true;
-			}else if ((mqttCollector.getCurrentKH() > 3.8) && (mqttCollector.getCurrentKH() < 4.2) && flow_active) {
-				mqttCollector.simulateOsmoticWaterTank("OFF");
-				flow_active = false;
+			//If the kH sensor has published a new kH value then check its value
+			if(mqttCollector.isNewCurrentKH()) {
+				checkKHStatus(
+						mqttCollector,
+						configurationParameters.kHLowerBound,
+						configurationParameters.kHUpperBound,
+						configurationParameters.kHOptimalValue,
+						configurationParameters.epsilon);
 			}
+			
+			//check temp
+			
+			//check ph
+			// the ph can be changed IFF KH OK AND TEMP OK!!
 			
 		}
 		
 		
 		/*
-		 * Scrivere min kh e max kh in config
 		 * 
-		 * Aggiungere in CoapNewtCont il current flow e current level tank!
+		 * Aggiungere in CoapNetwCont il current flow e current level tank!
 		 * usare quelli
 		 * Aggiugnere la get per il json
 		 * aggiungere la scrittura nel DB per flow level
@@ -110,6 +116,37 @@ public class SmartAquariumApp {
 		 * L'app ogni tot controlla i valori!!
 		 */
 		
+	}
+	
+	private static void checkKHStatus(MQTTCollector mqttCollector, float lowerBound, float upperBound, float optimalValue, float epsilon) {
+		
+		//If kH < LB
+		if(((mqttCollector.getCurrentKH()) < lowerBound) && !flow_active) {
+			
+			//Activate the simulation on kH device
+			mqttCollector.simulateOsmoticWaterTank("INC");
+			flow_active = true;
+			
+			//TODO Send the command to the actuator [put] mode on;
+			
+		//If kH > UB	
+		}else if ((mqttCollector.getCurrentKH() > upperBound ) && !flow_active) {
+			
+			//Activate the simulation on kH device
+			mqttCollector.simulateOsmoticWaterTank("DEC");
+			flow_active = true;
+			
+			//TODO Send the command to the actuator [put] mode on;
+			
+		//If    kH in [ OptKH - epsilon, OptKH + epsilon] where optKH is the optimum value for kH
+		}else if ((mqttCollector.getCurrentKH() > optimalValue - epsilon) && (mqttCollector.getCurrentKH() < (optimalValue + epsilon)) && flow_active) {
+			
+			//Activate the simulation on kH device
+			mqttCollector.simulateOsmoticWaterTank("OFF");
+			flow_active = false;
+			
+			//TODO Send the command to the actuator [put] mode off;
+		}
 	}
 
 }

@@ -16,4 +16,8 @@
 	<osmoticWaterTankTopic>OsmoticWaterTank</osmoticWaterTankTopic>
 	<temperatureControllerTopic>TemperatureController</temperatureControllerTopic>
 	<co2DispenserTopic>co2Dispenser</co2DispenserTopic>
+	<kHLowerBound>4</kHLowerBound>
+	<kHUpperBound>6</kHUpperBound>
+	<kHOptimalValue>5</kHOptimalValue>
+	<epsilon>0.2</epsilon>
 </it.unipi.iot.configuration.ConfigurationParameters>
