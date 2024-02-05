@@ -5,6 +5,7 @@ import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
+import org.eclipse.paho.client.mqttv3.MqttPersistenceException;
 
 import it.unipi.iot.configuration.ConfigurationParameters;
 import it.unipi.iot.database.DatabaseManager;
@@ -24,6 +25,9 @@ public class MQTTCollector implements MqttCallback {
 	private final String pHTopic;
 	private final String kHTopic;
 	private final String temperatureTopic;
+	private final String osmoticWaterTankTopic;
+	private final String temperatureControllerTopic;
+	private final String co2DispenserTopic;
 	
 	//Names of the tables in which will be stored the samples
 	private final String pHDatabaseTableName;
@@ -36,6 +40,19 @@ public class MQTTCollector implements MqttCallback {
     //Parameters of the MQTT broker and MQTT client
 	private final String broker;
 	private final String clientId;
+	
+	//To keep track of the last value
+	private float currentKH;
+	private float currentPH;
+	private float currentTemperature;
+	
+	//To know if the currentKH was already read
+	private boolean newCurrentKH;
+	private boolean newCurrentPH;
+	private boolean newCurrentTemperature;
+	
+	//MqttClient to subscribe and publish(FOR SIMULATION)
+	private MqttClient mqttClient;
 	
 	
 	/**
@@ -56,7 +73,9 @@ public class MQTTCollector implements MqttCallback {
 		this.pHTopic = configurationParameters.pHTopic;
 		this.kHTopic = configurationParameters.kHTopic;
 		this.temperatureTopic = configurationParameters.temperatureTopic;
-		
+		this.osmoticWaterTankTopic = configurationParameters.osmoticWaterTankTopic;
+		this.temperatureControllerTopic = configurationParameters.temperatureControllerTopic;
+		this.co2DispenserTopic = configurationParameters.co2DispenserTopic;
 
 		this.pHDatabaseTableName = configurationParameters.pHDatabaseTableName;
 		this.kHDatabaseTableName = configurationParameters.kHDatabaseTableName;
@@ -65,27 +84,67 @@ public class MQTTCollector implements MqttCallback {
         this.broker = configurationParameters.MQTTBroker;
         this.clientId = configurationParameters.MQTTClientId;
 		
-
+        //Set the values that indicates that no data has been received yet
+        this.currentKH = 0;
+        this.currentPH = 0;
+        this.currentTemperature = 0;
+        
+        //current values not read yet
+        this.newCurrentKH = false;
+        this.newCurrentPH = false;
+        this.newCurrentTemperature = false;
+        
+        
         //Connect the mqttClient to the broker
-		MqttClient mqttClient = new MqttClient(broker, clientId);
+		this.mqttClient = new MqttClient(broker, clientId);
         System.out.println("[MQTTManager] Connecting to broker: "+broker);
         
-        mqttClient.setCallback( this );
+        this.mqttClient.setCallback( this );
         
-        mqttClient.connect();
+        this.mqttClient.connect();
         
         //Subscribe to the pH topic
-        mqttClient.subscribe(pHTopic);
+        this.mqttClient.subscribe(pHTopic);
         
         //Subscribe to the kH topic
-        mqttClient.subscribe(kHTopic);
+        this.mqttClient.subscribe(kHTopic);
         
         //Subscribe to the temperature topic
-        mqttClient.subscribe(temperatureTopic);
+        this.mqttClient.subscribe(temperatureTopic);
         
-        // TODO GITIGNORE FOR THE BUILDS!!!
 	}
 
+	public float getCurrentKH() {
+		this.newCurrentKH = false;
+		return currentKH;
+	}
+
+	public float getCurrentPH() {
+		this.newCurrentPH = false;
+		return currentPH;
+	}
+
+	public float getCurrentTemperature() {
+		this.newCurrentTemperature = false;
+		return currentTemperature;
+	}
+
+	/**
+	 * TODO
+	 * @param message
+	 */
+	public void simulateOsmoticWaterTank(String message) {
+		try {
+			mqttClient.publish( this.osmoticWaterTankTopic , new MqttMessage(message.getBytes()));
+		} catch (MqttPersistenceException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (MqttException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
 	@Override
 	public void connectionLost(Throwable cause) {
 		// TODO Auto-generated method stub
@@ -107,6 +166,10 @@ public class MQTTCollector implements MqttCallback {
 			//Insert in the table passed as first argument the pH value passed as second argument
 			db.insertSample(this.pHDatabaseTableName, pHSample.getpHValue() );
 			
+			//Update the current value
+			this.currentPH = pHSample.getpHValue();
+			this.newCurrentPH = true;
+			
 			//LOG
 			System.out.println("[MQTTCollector] Inserted " + pHSample + " in " + this.pHDatabaseTableName + "." );
 		
@@ -120,6 +183,10 @@ public class MQTTCollector implements MqttCallback {
 			
 			//Insert in the table passed as first argument the kH value passed as second argument
 			db.insertSample(this.kHDatabaseTableName, kHSample.getkHValue() );
+			
+			//Update the current value
+			this.currentKH = kHSample.getkHValue();
+			this.newCurrentKH = true;
 			
 			//LOG
 			System.out.println("[MQTTCollector] Inserted " + kHSample + " in " + this.kHDatabaseTableName + "." );
@@ -135,6 +202,10 @@ public class MQTTCollector implements MqttCallback {
 			
 			//Insert in the table passed as first argument the temperature value passed as second argument
 			db.insertSample(this.temperatureDatabaseTableName, temperatureSample.getTemperatureValue() );
+			
+			//Update the current value
+			this.currentTemperature = temperatureSample.getTemperatureValue();
+			this.newCurrentTemperature = true;
 			
 			//LOG
 			System.out.println("[MQTTCollector] Inserted " + temperatureSample + " in " + this.temperatureDatabaseTableName + "." );

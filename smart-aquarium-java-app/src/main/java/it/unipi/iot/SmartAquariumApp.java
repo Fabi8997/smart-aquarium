@@ -14,7 +14,7 @@ import it.unipi.iot.coap.CoAPNetworkController;
  */
 public class SmartAquariumApp {
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws MqttException {
 		System.out.println("[SMART AQUARIUM] Welcome to your Smart Aquarium!");
 		
 		//Load configuration parameters
@@ -27,17 +27,19 @@ public class SmartAquariumApp {
 		
 		//Initialize database manager using the configuration parameters
 		DatabaseManager db = new DatabaseManager(configurationXML.configurationParameters);
+		
+		MQTTCollector mqttCollector = new MQTTCollector(configurationXML.configurationParameters, db);
         
-		try {
+		/*try {
         	//Launch mqttCollector
         	@SuppressWarnings("unused")
-			MQTTCollector mqttCollector = new MQTTCollector(configurationXML.configurationParameters, db);
+        	MQTTCollector mqttCollector = new MQTTCollector(configurationXML.configurationParameters, db);
         	
         	
         } catch(MqttException me) {
 
             me.printStackTrace();
-        }
+        }*/
 		
 		System.out.println("\n[SMART AQUARIUM] Launching the CoAP Network Manager...\n");
 		
@@ -50,7 +52,7 @@ public class SmartAquariumApp {
 		System.out.println("[SMART AQUARIUM] Waiting for the registration of all the devices...");
 		
 		//Wait until all the devices are registered
-		while(!coapNetworkController.allDevicesRegistered()) {
+		/*while(!coapNetworkController.allDevicesRegistered()) {
 			try {
 				
 				//Sleep for 5 seconds to wait for registration
@@ -63,19 +65,47 @@ public class SmartAquariumApp {
 		}
 		
 		System.out.println("[SMART AQUARIUM] All the devices are registered to the CoAP Network Controller");
-		try {
-			Thread.sleep(5000);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		
 		//System.out.println("response: " + coapNetworkController.getOsmoticWaterTank().get().getResponseText());
+		*/
 		
 		//TODO 
+		
+		boolean flow_active = false; //To be substituted by coapGETStatus
+		while(true) {
+			try {
+				Thread.sleep(15000);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+			
+			if(((mqttCollector.getCurrentKH()) < 3) && !flow_active) {
+				mqttCollector.simulateOsmoticWaterTank("INC");
+				flow_active = true;
+			}else if ((mqttCollector.getCurrentKH() > 5 ) && !flow_active) {
+				mqttCollector.simulateOsmoticWaterTank("DEC");
+				flow_active = true;
+			}else if ((mqttCollector.getCurrentKH() > 3.8) && (mqttCollector.getCurrentKH() < 4.2) && flow_active) {
+				mqttCollector.simulateOsmoticWaterTank("OFF");
+				flow_active = false;
+			}
+			
+		}
+		
+		
 		/*
-		 * Creare simulazine con sensore kh e water tank
+		 * Scrivere min kh e max kh in config
+		 * 
+		 * Aggiungere in CoapNewtCont il current flow e current level tank!
+		 * usare quelli
+		 * Aggiugnere la get per il json
+		 * aggiungere la scrittura nel DB per flow level
 		 * Implementare l'invio del put on quando il kh <= lb or >= ub
 		 * Di conseguenza occorre salire gradualmente nella simulazione !!
+		 * Fatto questo l'interazione tra tank e sensori è finita!!
+		 * 
 		 * 
 		 * L'app ogni tot controlla i valori!!
 		 */

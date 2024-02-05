@@ -15,12 +15,9 @@
 #include <string.h>
 #include <strings.h>
 /*---------------------------------------------------------------------------*/
-#define LOG_MODULE "mqtt-client"
-#ifdef MQTT_CLIENT_CONF_LOG_LEVEL
-#define LOG_LEVEL MQTT_CLIENT_CONF_LOG_LEVEL
-#else
-#define LOG_LEVEL LOG_LEVEL_DBG
-#endif
+#define LOG_MODULE "kh device"
+#define LOG_LEVEL LOG_LEVEL_INFO
+
 
 /*---------------------------------------------------------------------------*/
 /* MQTT broker address. */
@@ -31,6 +28,7 @@ static const char *broker_ip = MQTT_CLIENT_BROKER_IP_ADDR;
 // Defaukt config values
 #define DEFAULT_BROKER_PORT         1883
 #define DEFAULT_PUBLISH_INTERVAL    (30 * CLOCK_SECOND)
+#define SHORT_PUBLISH_INTERVAL (2*CLOCK_SECOND)
 
 
 // We assume that the broker does not require authentication
@@ -88,20 +86,32 @@ PROCESS(mqtt_kH_process, "MQTT kH Client");
 
 
 /*---------------------------------------------------------------------------*/
-static void
-pub_handler(const char *topic, uint16_t topic_len, const uint8_t *chunk,
+
+//VARIABLE TO IMPLEMENT CORRECTLY THE SIMULATION, IT'S RELATED TO THE ACTUATOR IMPLEMENTED IN THE CoAP NETWORK
+static int osmotic_water_flow = 0;
+
+//when the flow of water is activated a msg is published in the following topic
+static void pub_handler(const char *topic, uint16_t topic_len, const uint8_t *chunk,
             uint16_t chunk_len)
 {
-  printf("Pub Handler: topic='%s' (len=%u), chunk_len=%u\n", topic,
-          topic_len, chunk_len);
+  // THIS IS A FICTITIOUS MESSAGE!
+  //Just for simulation purposes, in order to set the variable to the correct value!!
+  if(strcmp(topic, "OsmoticWaterTank") == 0) {
+    
+	//LOG_INFO("Pub Handler: topic='%s' (len=%u), chunk_len=%u, %s \n", topic, topic_len, chunk_len, chunk);
+	
+	if(strcmp((const char*) chunk, "OFF") == 0) { //No water flow
+		osmotic_water_flow = 0;
+	} else if(strcmp((const char*) chunk, "DEC") == 0) { //Water flow to reduce the kH
+		osmotic_water_flow = -1;
+	} else if(strcmp((const char*) chunk, "INC") == 0)  { //Water flow to increase the kH
+		osmotic_water_flow = 1;
+	}
 
-  if(strcmp(topic, "CO2") == 0) {
-    printf("CO2\n");
-	printf("%s\n", chunk);
-    // Do something :)
     return;
   }
 }
+
 /*---------------------------------------------------------------------------*/
 static void
 mqtt_event(struct mqtt_connection *m, mqtt_event_t event, void *data)
@@ -171,35 +181,27 @@ have_connectivity(void)
 
 
 /*Initialized the value of the kH to the value at the center of the interval*/
-static float kH_value = 4.0;
-
-/*Extreme of the safe interval for the kH (to be used for leds)*/
-//static float min_kH_value = 4.0;
-//static float max_kH_value = 6.0;
+static float kH_value = 5.2;
 
 /*Values used respectively to define the upper bound of the possible variation interval and for the standard pH
   variation in case of stabilization using CO2*/
 static float max_kH_variation = 0.2;
 static float kH_variation_osmotic_water = 0.05;
 
-//TODO change with variation of kH
-/*If CO2_variation = 0 => no stabilization of pH active (START STATE)
-  if CO2_variation = -1 => the CO2 erogation tries to reduce the pH gradually
-  if CO2_variation = 1 => the CO2 erogation tries to increase the pH gradually
-
-  NOTE: for simulation purposes this value is changed based on the value publiced in the topic related to the CO2
+/*
+  NOTE: for simulation purposes this value is changed based on the value publiced in the topic related to the OsmoticWaterTank
 	changes, that is a topic created ONLY to make the simulation coherent. 
 */
 
-//static int CO2_variation = 0;
 
-/*The following function is used to simulate the changes of the kH sensed by the kH device; it require a parameter
+/*The following function is used to simulate the changes of the kH sensed by the kH device; it reads the variable
   that indicates icf osmotic water is being released into the aquarium to increase/reduce the kH value.*/
-static void change_kH_simulation(int osmotic_water){
+static void change_kH_simulation(){
 
 	
-	/*If no change in the erogation of CO2 is active, so random behaviour*/
-	if(osmotic_water == 0){
+	/*If no change in the erogation of osmotic water is active, so random behaviour*/
+	if(osmotic_water_flow == 0){
+
 		/*Generate an integer belonging to the set {0,1,2} to take a decision for the simulation*/
 		int decision = rand() % 3;
 
@@ -223,16 +225,15 @@ static void change_kH_simulation(int osmotic_water){
 			}			
 		}
 	/*The osmotic water erogation tries to reduce the kH value, it is done to keep the kH inside the interval in which the pH can be modified*/
-	}else if(osmotic_water == -1){
+	}else if(osmotic_water_flow == -1){
 		kH_value -= kH_variation_osmotic_water;
 
 	/*The osmotic water erogation tries to increase the kH value, it is done to keep the kH inside the interval in which the pH can be modified*/
-	} else if(osmotic_water == 1){
+	} else if(osmotic_water_flow == 1){
 		kH_value += kH_variation_osmotic_water;
 	}
 }
 
-/*TODO custom behavior of each sensor*/
 /*TODO: add the CO2 behaviour both here and in the MQTTCollector;
         maybe before I have to implement the database part! in this way
 	the mqtt network can be completed without problems.
@@ -296,11 +297,11 @@ PROCESS_THREAD(mqtt_kH_process, ev, data)
 		  if(state==STATE_CONNECTED){
 		  
 			  // Subscribe to a topic
-			  strcpy(sub_topic,"osmoticWater");
+			  strcpy(sub_topic,"OsmoticWaterTank");
 
 			  status = mqtt_subscribe(&conn, NULL, sub_topic, MQTT_QOS_LEVEL_0);
 
-			  printf("[kH device] Subscribing to topic osmoticWater for simulation purposes!\n");
+			  printf("[kH device] Subscribing to topic OsmoticWaterTank for simulation purposes!\n");
 			  if(status == MQTT_STATUS_OUT_QUEUE_FULL) {
 				LOG_ERR("[kH device] Tried to subscribe but command queue was full!\n");
 				PROCESS_EXIT();
@@ -312,24 +313,25 @@ PROCESS_THREAD(mqtt_kH_process, ev, data)
 			  
 		if(state == STATE_SUBSCRIBED){
 			// Publish something
-		    sprintf(pub_topic, "%s", "kH");
+			sprintf(pub_topic, "%s", "kH");
 			
-			//TODO pass the global var osmotic_water_status
-			change_kH_simulation(0);
+			//Pass the global var osmotic_water_flow to the simulation in order to simulate the value correctly
+			change_kH_simulation(osmotic_water_flow);
 
 			// Since the precision of the kH sensor is limeted to +=0.01 then are sent just the first two digit of the fractional part
 			sprintf(app_buffer, "{\"kH\":%.2f}", kH_value);
 			
 				
 			mqtt_publish(&conn, NULL, pub_topic, (uint8_t *)app_buffer,
-               strlen(app_buffer), MQTT_QOS_LEVEL_0, MQTT_RETAIN_OFF);
+               		strlen(app_buffer), MQTT_QOS_LEVEL_0, MQTT_RETAIN_OFF);
 		
 		} else if ( state == STATE_DISCONNECTED ){
-		   LOG_ERR("[kH device] Disconnected from MQTT broker\n");	
-		   // Recover from error
+		   LOG_ERR("[kH device] Disconnected from MQTT broker\n");		
+		   state = STATE_INIT;
+
 		}
 		
-		etimer_set(&periodic_timer, STATE_MACHINE_PERIODIC);
+		etimer_set(&periodic_timer, SHORT_PUBLISH_INTERVAL);
       
     }
 

@@ -20,6 +20,10 @@ public class ConfigurationParameters {
 	public String pHTopic;
 	public String kHTopic;
 	public String temperatureTopic;
+	public String osmoticWaterTankTopic;
+	public String temperatureControllerTopic;
+	public String co2DispenserTopic;
+	
 	@Override
 	public String toString() {
 		return "ConfigurationParameters [databaseIP=" + databaseIP + ",\n databasePort=" + databasePort
@@ -27,8 +31,12 @@ public class ConfigurationParameters {
 				+ ",\n databaseName=" + databaseName + ",\n pHDatabaseTableName=" + pHDatabaseTableName
 				+ ",\n kHDatabaseTableName=" + kHDatabaseTableName + ",\n temperatureDatabaseTableName="
 				+ temperatureDatabaseTableName + ",\n MQTTBroker=" + MQTTBroker + ",\n MQTTClientId=" + MQTTClientId
-				+ ",\n pHTopic=" + pHTopic + ",\n kHTopic=" + kHTopic + ",\n temperatureTopic=" + temperatureTopic + "]\n";
+				+ ",\n pHTopic=" + pHTopic + ",\n kHTopic=" + kHTopic + ",\n temperatureTopic=" + temperatureTopic
+				+ ",\n osmoticWaterTankTopic=" + osmoticWaterTankTopic + ",\n temperatureControllerTopic="
+				+ temperatureControllerTopic + ",\n co2DispenserTopic=" + co2DispenserTopic + "]\n";
 	}
+	
+	
 	
 	
 	

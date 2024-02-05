@@ -58,6 +58,19 @@ public class CoAPNetworkController extends CoapServer {
 		return osmoticWaterTank;
 	}
 
+    
+	public boolean osmoticWaterTankRegistered() {
+		return osmoticWaterTank != null;
+	}
+	
+	public boolean temperatureControllerRegistered() {
+		return temperatureController != null;
+	}
+	
+	public boolean co2DispenserRegistered() {
+		return co2Dispenser != null;
+	}
+	
 	/**
 	 * Getter
 	 * @return CoAP Client for the temperature controller
@@ -155,6 +168,7 @@ public class CoAPNetworkController extends CoapServer {
 					observeTankRelation = osmoticWaterTank.observe(
 							new CoapHandler() {
 								@Override public void onLoad(CoapResponse response) {
+									//TODO substitute with json, add the variable current water flow and flow level!!
 									String content = response.getResponseText();
 									System.out.println(content);
 								}

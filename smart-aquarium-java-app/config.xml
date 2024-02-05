@@ -13,4 +13,7 @@
 	<pHTopic>pH</pHTopic>
 	<kHTopic>kH</kHTopic>
 	<temperatureTopic>temperature</temperatureTopic>
+	<osmoticWaterTankTopic>OsmoticWaterTank</osmoticWaterTankTopic>
+	<temperatureControllerTopic>TemperatureController</temperatureControllerTopic>
+	<co2DispenserTopic>co2Dispenser</co2DispenserTopic>
 </it.unipi.iot.configuration.ConfigurationParameters>
