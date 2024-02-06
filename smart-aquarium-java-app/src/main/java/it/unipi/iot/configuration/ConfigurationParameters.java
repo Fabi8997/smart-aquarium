@@ -15,6 +15,7 @@ public class ConfigurationParameters {
 	public String pHDatabaseTableName;
 	public String kHDatabaseTableName;
 	public String temperatureDatabaseTableName;
+	public String osmoticWaterTankDatabaseTableName;
 	public String MQTTBroker;
 	public String MQTTClientId;
 	public String pHTopic;

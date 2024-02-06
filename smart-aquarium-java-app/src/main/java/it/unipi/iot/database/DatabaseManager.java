@@ -27,12 +27,13 @@ public class DatabaseManager {
     private final String pHDatabaseTableName;
     private final String kHDatabaseTableName;
     private final String temperatureDatabaseTableName;
+    private final String osmoticWaterTankDatabaseTableName;
     
     //Prepared statement to be used during the insertion
     private PreparedStatement preparedStatementPH;
     private PreparedStatement preparedStatementKH;
     private PreparedStatement preparedStatementTemperature;
-    
+    private PreparedStatement preparedStatementOsmoticWaterTank;
     //Connection to the DB
     private Connection connection;
     
@@ -52,6 +53,7 @@ public class DatabaseManager {
 		this.pHDatabaseTableName = configurationParameters.pHDatabaseTableName;
 		this.kHDatabaseTableName = configurationParameters.kHDatabaseTableName;
 		this.temperatureDatabaseTableName = configurationParameters.temperatureDatabaseTableName;
+		this.osmoticWaterTankDatabaseTableName = configurationParameters.osmoticWaterTankDatabaseTableName;
 		
 		//Create the connection to MYSQL
 		StringBuilder stringBuilder = new StringBuilder("jdbc:mysql://");
@@ -72,6 +74,9 @@ public class DatabaseManager {
 			
 			//Create a prepared statement to interact when the table is Temperature
 			preparedStatementTemperature = connection.prepareStatement("INSERT INTO " +  this.temperatureDatabaseTableName + " (value) VALUES (?)");
+		
+			//Create a prepared statement to interact when the table is OsmoticWaterTank
+			preparedStatementOsmoticWaterTank = connection.prepareStatement("INSERT INTO " +  this.osmoticWaterTankDatabaseTableName + " (value) VALUES (?)");
 		
 		} catch (SQLException e) {
 			System.out.println("[DatabaseManager] Error during the connection to the database.");
@@ -133,8 +138,20 @@ public class DatabaseManager {
         			//Record inserted correctly
         			return true;
         		}
+        	}else if(table.equals(osmoticWaterTankDatabaseTableName) ) {
+        		
+        		//Use the prepared statement of the temperature
+        		preparedStatementOsmoticWaterTank.setFloat(1, value);
+        		
+        		//If something bad happens throw an exception, the program must continue
+        		if(preparedStatementOsmoticWaterTank.executeUpdate() != 1) {
+        			throw new SQLException("[DatabaseManager] Problem during insertion in " + osmoticWaterTankDatabaseTableName + "!\n");
+        		}else {
+        			
+        			//Record inserted correctly
+        			return true;
+        		}
         	}
-        	
 		} catch (SQLException e) {
 			e.printStackTrace();
 		} 

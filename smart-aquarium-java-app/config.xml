@@ -8,6 +8,7 @@
 	<pHDatabaseTableName>PH</pHDatabaseTableName>
 	<kHDatabaseTableName>KH</kHDatabaseTableName>
 	<temperatureDatabaseTableName>Temperature</temperatureDatabaseTableName>
+	<osmoticWaterTankDatabaseTableName>OsmoticWaterTank</osmoticWaterTankDatabaseTableName>
 	<MQTTBroker>tcp://127.0.0.1:1883</MQTTBroker>
 	<MQTTClientId>SmartAquariumMQTTCollector</MQTTClientId>
 	<pHTopic>pH</pHTopic>

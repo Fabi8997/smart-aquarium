@@ -17,6 +17,7 @@ import it.unipi.iot.coap.CO2.CO2Dispenser;
 import it.unipi.iot.coap.osmoticwater.OsmoticWaterTank;
 import it.unipi.iot.coap.temperature.TemperatureController;
 import it.unipi.iot.configuration.ConfigurationParameters;
+import it.unipi.iot.database.DatabaseManager;
 
 
 
@@ -36,18 +37,26 @@ public class CoAPNetworkController extends CoapServer {
 	TemperatureController temperatureController;
 	CO2Dispenser co2Dispenser;
 	
+	//DB table names
+    private final String osmoticWaterTankDatabaseTableName;
+	
 	//ConfigurationParameters
 	ConfigurationParameters configurationParameters;
+	
+	//DB manager to set up the connection to the DB and to query it
+	private final DatabaseManager db;
 	
 	/**
 	 * Constructs a CoAP server. <br>
 	 * Add the registration resource to be handled by the server.
 	 * @param configurationParameters
 	 */
-	public CoAPNetworkController(ConfigurationParameters configurationParameters) {
+	public CoAPNetworkController(ConfigurationParameters configurationParameters, DatabaseManager db) {
 		super();
 		this.add(new CoAPRegistrationResource("registration"));
 		this.configurationParameters = configurationParameters;
+		this.db = db;
+		this.osmoticWaterTankDatabaseTableName = configurationParameters.osmoticWaterTankDatabaseTableName;
 	}
 	
 	/**
@@ -168,9 +177,47 @@ public class CoAPNetworkController extends CoapServer {
 					observeTankRelation = osmoticWaterTank.observe(
 							new CoapHandler() {
 								@Override public void onLoad(CoapResponse response) {
-									//TODO substitute with json, add the variable current water flow and flow level!!
-									String content = response.getResponseText();
-									System.out.println(content);
+									
+									//Objects to handle the JSON format
+									JSONParser parser = new JSONParser();
+									JSONObject requestTextJSON = null;
+									
+									try {
+										requestTextJSON = (JSONObject) parser.parse(response.getResponseText());
+									} catch (ParseException e) {
+										// TODO Auto-generated catch block
+										e.printStackTrace();
+										
+									}
+
+									//If correctly parsed
+									if(requestTextJSON != null) {
+										
+										//Retrieve the mode field since if the flow can be stopped due to low level 
+										String mode = (String) requestTextJSON.get("mode");
+										
+										//Check if the mode is changed and set the flag
+										if(mode.equals("on") && !osmoticWaterTank.isOsmoticWaterTankFlowActive()) {
+											
+											//Set the flow as active
+											osmoticWaterTank.setOsmoticWaterTankFlowActive(true);
+											
+										}else if(mode.equals("off") && osmoticWaterTank.isOsmoticWaterTankFlowActive()){
+											
+											//Set the flow as inactive
+											osmoticWaterTank.setOsmoticWaterTankFlowActive(false);
+											
+										}
+						
+										//Retrieve the tank level
+									    osmoticWaterTank.setOsmoticWaterTankLevel(new Float((Double) requestTextJSON.get("level")));
+									    
+									    //Insert the sample in the DB
+									    db.insertSample(osmoticWaterTankDatabaseTableName, osmoticWaterTank.getOsmoticWaterTankLevel());
+									    
+									    //LOG
+									    System.out.println("[CoAP Network Controller] Inserted " + requestTextJSON.toJSONString() + " in " + osmoticWaterTankDatabaseTableName + "." );
+									}
 								}
 								@Override public void onError() {
 									System.err.println("-Failed--------");

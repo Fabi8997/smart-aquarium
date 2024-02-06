@@ -49,7 +49,7 @@ public class SmartAquariumApp {
 		System.out.println("\n[SMART AQUARIUM] Launching the CoAP Network Manager...\n");
 		
 		//Create a new CoAP Server to handle the CoAP network
-		CoAPNetworkController coapNetworkController = new CoAPNetworkController(configurationParameters);
+		CoAPNetworkController coapNetworkController = new CoAPNetworkController(configurationParameters, db);
 		
 		//Start the CoAP Server
 		coapNetworkController.start();
@@ -83,7 +83,7 @@ public class SmartAquariumApp {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			
+		/*
 			//If the kH sensor has published a new kH value then check its value
 			if(mqttCollector.isNewCurrentKH()) {
 				checkKHStatus(
@@ -98,16 +98,16 @@ public class SmartAquariumApp {
 			
 			//check ph
 			// the ph can be changed IFF KH OK AND TEMP OK!!
-			
+		*/	
 		}
 		
 		
+		
 		/*
-		 * 
-		 * Aggiungere in CoapNetwCont il current flow e current level tank!
-		 * usare quelli
-		 * Aggiugnere la get per il json
-		 * aggiungere la scrittura nel DB per flow level
+		 * Ricordare di mettere il trigger anche quando viene riempito il coso
+		 * Mettere MQTTCollector e CoAPNetwork globali!
+		 * Implement activateFlow and stopFlow
+		 * Sostituite flow active con getOsmoticFlowActive
 		 * Implementare l'invio del put on quando il kh <= lb or >= ub
 		 * Di conseguenza occorre salire gradualmente nella simulazione !!
 		 * Fatto questo l'interazione tra tank e sensori è finita!!
@@ -125,7 +125,7 @@ public class SmartAquariumApp {
 			
 			//Activate the simulation on kH device
 			mqttCollector.simulateOsmoticWaterTank("INC");
-			flow_active = true;
+			flow_active = true;//Lo farà la put
 			
 			//TODO Send the command to the actuator [put] mode on;
 			
