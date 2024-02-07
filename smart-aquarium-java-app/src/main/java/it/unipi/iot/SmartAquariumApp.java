@@ -83,9 +83,10 @@ public class SmartAquariumApp {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+			
 		/*
 			//If the kH sensor has published a new kH value then check its value
-			if(mqttCollector.isNewCurrentKH()) {
+			if((coapNetworkController != null) && (mqttCollector.isNewCurrentKH())) {
 				checkKHStatus(
 						mqttCollector,
 						configurationParameters.kHLowerBound,
@@ -104,11 +105,8 @@ public class SmartAquariumApp {
 		
 		
 		/*
-		 * Ricordare di mettere il trigger anche quando viene riempito il coso
-		 * Mettere MQTTCollector e CoAPNetwork globali!
-		 * Implement activateFlow and stopFlow
-		 * Sostituite flow active con getOsmoticFlowActive
-		 * Implementare l'invio del put on quando il kh <= lb or >= ub
+		 * Testare mqtt -> app <---> coap
+		 * Decidere gli istanti temporali, l'istante di pubblicazione deve essere lo stesso
 		 * Di conseguenza occorre salire gradualmente nella simulazione !!
 		 * Fatto questo l'interazione tra tank e sensori è finita!!
 		 * 
@@ -118,34 +116,35 @@ public class SmartAquariumApp {
 		
 	}
 	
-	private static void checkKHStatus(MQTTCollector mqttCollector, float lowerBound, float upperBound, float optimalValue, float epsilon) {
+	private static void checkKHStatus(MQTTCollector mqttCollector, CoAPNetworkController coapNetworkController, float lowerBound, float upperBound, float optimalValue, float epsilon) {
 		
 		//If kH < LB
-		if(((mqttCollector.getCurrentKH()) < lowerBound) && !flow_active) {
+		if(((mqttCollector.getCurrentKH()) < lowerBound) && !coapNetworkController.getOsmoticWaterTank().isOsmoticWaterTankFlowActive()) {
 			
 			//Activate the simulation on kH device
 			mqttCollector.simulateOsmoticWaterTank("INC");
-			flow_active = true;//Lo farà la put
 			
-			//TODO Send the command to the actuator [put] mode on;
+			//Send the command to the actuator to start the flow: mode=on
+			coapNetworkController.getOsmoticWaterTank().activateFlow();
 			
 		//If kH > UB	
-		}else if ((mqttCollector.getCurrentKH() > upperBound ) && !flow_active) {
+		}else if ((mqttCollector.getCurrentKH() > upperBound ) && !coapNetworkController.getOsmoticWaterTank().isOsmoticWaterTankFlowActive()) {
 			
 			//Activate the simulation on kH device
 			mqttCollector.simulateOsmoticWaterTank("DEC");
-			flow_active = true;
 			
-			//TODO Send the command to the actuator [put] mode on;
+			//Send the command to the actuator to start the flow: mode=on
+			coapNetworkController.getOsmoticWaterTank().activateFlow();
+			
 			
 		//If    kH in [ OptKH - epsilon, OptKH + epsilon] where optKH is the optimum value for kH
-		}else if ((mqttCollector.getCurrentKH() > optimalValue - epsilon) && (mqttCollector.getCurrentKH() < (optimalValue + epsilon)) && flow_active) {
+		}else if ((mqttCollector.getCurrentKH() > optimalValue - epsilon) && (mqttCollector.getCurrentKH() < (optimalValue + epsilon)) && coapNetworkController.getOsmoticWaterTank().isOsmoticWaterTankFlowActive()) {
 			
 			//Activate the simulation on kH device
 			mqttCollector.simulateOsmoticWaterTank("OFF");
-			flow_active = false;
 			
-			//TODO Send the command to the actuator [put] mode off;
+			//Send the command to the actuator to stop the flow: mode=off
+			coapNetworkController.getOsmoticWaterTank().stopFlow();
 		}
 	}
 

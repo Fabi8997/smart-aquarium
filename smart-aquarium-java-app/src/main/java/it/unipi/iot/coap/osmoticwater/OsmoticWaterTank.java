@@ -1,6 +1,9 @@
 package it.unipi.iot.coap.osmoticwater;
 
 import org.eclipse.californium.core.CoapClient;
+import org.eclipse.californium.core.CoapHandler;
+import org.eclipse.californium.core.CoapResponse;
+import org.eclipse.californium.core.coap.MediaTypeRegistry;
 
 import it.unipi.iot.configuration.ConfigurationParameters;
 
@@ -21,13 +24,65 @@ public class OsmoticWaterTank extends CoapClient{
 	}
 	
 	public void activateFlow() {
+		
 		//send put mode on
-		//set flow active to false
+		this.put(new CoapHandler() {
+            
+			@Override
+            public void onLoad(CoapResponse response) {
+                if (response != null) {
+                    if(!response.isSuccess()) {
+                    	
+                        System.out.println("[CoAP Network Controller] Put operation failed [device: OsmoticWaterTank].");
+                    }else {
+                    	
+                    	System.out.println("[CoAP Network Controller] Osmotic water tank --> mode = on.");
+                    	
+                    	//Set the flag to signal that the flow is active
+                		osmoticWaterTankFlowActive = true;
+                    }
+                }
+            }
+
+            public void onError() {
+                System.err.println("[CoAP Network Controller] Put operation failed [device: OsmoticWaterTank].");
+            }
+
+			
+
+        }, "mode=on", MediaTypeRegistry.TEXT_PLAIN);
+
+	
 	}
 	
 	public void stopFlow() {
+		
 		//send put mode off
-		//set flow active to false
+				this.put(new CoapHandler() {
+		            
+					@Override
+		            public void onLoad(CoapResponse response) {
+		                if (response != null) {
+		                    if(!response.isSuccess()) {
+		                    	
+		                        System.out.println("[CoAP Network Controller] Put operation failed [device: OsmoticWaterTank].");
+		                    }else {
+		                    	
+		                    	System.out.println("[CoAP Network Controller] Osmotic water tank mode = off.");
+		                    	
+		                    	//Set the flag to signal that the flow is stopped
+		                		osmoticWaterTankFlowActive = false;
+		                    }
+		                }
+		            }
+
+		            public void onError() {
+		                System.err.println("[CoAP Network Controller] Put operation failed [device: OsmoticWaterTank].");
+		            }
+
+					
+
+		        }, "mode=off", MediaTypeRegistry.TEXT_PLAIN);
 	}
 
 	public float getOsmoticWaterTankLevel() {

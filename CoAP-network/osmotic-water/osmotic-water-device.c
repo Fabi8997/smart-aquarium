@@ -203,6 +203,8 @@ PROCESS_THREAD(osmotic_water_device, ev, data)
 		  //Turn on the green led and turn off the red led
 		  leds_off(LEDS_RED);
 		  leds_on(LEDS_GREEN);
+
+		  res_tank.trigger();
 	
 		  LOG_INFO("Tank filled correctly!\n");
 
