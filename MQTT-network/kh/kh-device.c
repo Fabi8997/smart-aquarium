@@ -28,7 +28,7 @@ static const char *broker_ip = MQTT_CLIENT_BROKER_IP_ADDR;
 // Defaukt config values
 #define DEFAULT_BROKER_PORT         1883
 #define DEFAULT_PUBLISH_INTERVAL    (30 * CLOCK_SECOND)
-#define SHORT_PUBLISH_INTERVAL (2*CLOCK_SECOND)
+#define SHORT_PUBLISH_INTERVAL (5*CLOCK_SECOND)
 
 
 // We assume that the broker does not require authentication
@@ -118,13 +118,13 @@ mqtt_event(struct mqtt_connection *m, mqtt_event_t event, void *data)
 {
   switch(event) {
   case MQTT_EVENT_CONNECTED: {
-    printf("Application has a MQTT connection\n");
+    printf("[kH device] Application has a MQTT connection\n");
 
     state = STATE_CONNECTED;
     break;
   }
   case MQTT_EVENT_DISCONNECTED: {
-    printf("MQTT Disconnect. Reason %u\n", *((mqtt_event_t *)data));
+    printf("[kH device] MQTT Disconnect. Reason %u\n", *((mqtt_event_t *)data));
 
     state = STATE_DISCONNECTED;
     process_poll(&mqtt_kH_process);
@@ -142,25 +142,25 @@ mqtt_event(struct mqtt_connection *m, mqtt_event_t event, void *data)
     mqtt_suback_event_t *suback_event = (mqtt_suback_event_t *)data;
 
     if(suback_event->success) {
-      printf("Application is subscribed to topic successfully\n");
+      printf("[kH device] Application is subscribed to topic successfully\n");
     } else {
-      printf("Application failed to subscribe to topic (ret code %x)\n", suback_event->return_code);
+      printf("[kH device] Application failed to subscribe to topic (ret code %x)\n", suback_event->return_code);
     }
 #else
-    printf("Application is subscribed to topic successfully\n");
+    printf("[kH device] Application is subscribed to topic successfully\n");
 #endif
     break;
   }
   case MQTT_EVENT_UNSUBACK: {
-    printf("Application is unsubscribed to topic successfully\n");
+    printf("[kH device] Application is unsubscribed to topic successfully\n");
     break;
   }
   case MQTT_EVENT_PUBACK: {
-    printf("Publishing complete.\n");
+    printf("[kH device] Publishing complete.\n");
     break;
   }
   default:
-    printf("Application got a unhandled MQTT event: %i\n", event);
+    printf("[kH device] Application got a unhandled MQTT event: %i\n", event);
     break;
   }
 }
@@ -181,7 +181,7 @@ have_connectivity(void)
 
 
 /*Initialized the value of the kH to the value at the center of the interval*/
-static float kH_value = 5.2;
+static float kH_value = 4.2;
 
 /*Values used respectively to define the upper bound of the possible variation interval and for the standard pH
   variation in case of stabilization using CO2*/
@@ -233,12 +233,6 @@ static void change_kH_simulation(){
 		kH_value += kH_variation_osmotic_water;
 	}
 }
-
-/*TODO: add the CO2 behaviour both here and in the MQTTCollector;
-        maybe before I have to implement the database part! in this way
-	the mqtt network can be completed without problems.
-	Cambiamenti dati dalla CO2 proporzionali al kH????? maggiore è il kh
-	minore sarà il cambiamento del pH, molto bella come idea*/
 
 /*---------------------------------------------------------------------------*/
 /*---------------------------------------------------------------------------*/

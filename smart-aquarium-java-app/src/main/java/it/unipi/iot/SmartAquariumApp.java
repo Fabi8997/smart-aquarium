@@ -34,17 +34,6 @@ public class SmartAquariumApp {
 		
 		//Launch mqttCollector
 		MQTTCollector mqttCollector = new MQTTCollector(configurationParameters, db);
-        
-		/*try {
-        	//Launch mqttCollector
-        	@SuppressWarnings("unused")
-        	MQTTCollector mqttCollector = new MQTTCollector(configurationXML.configurationParameters, db);
-        	
-        	
-        } catch(MqttException me) {
-
-            me.printStackTrace();
-        }*/
 		
 		System.out.println("\n[SMART AQUARIUM] Launching the CoAP Network Manager...\n");
 		
@@ -78,17 +67,18 @@ public class SmartAquariumApp {
 		
 		while(true) {
 			try {
-				Thread.sleep(15000);//ADD in configuration the 
+				Thread.sleep(5000);//ADD in configuration the 
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 			
-		/*
+		
 			//If the kH sensor has published a new kH value then check its value
 			if((coapNetworkController != null) && (mqttCollector.isNewCurrentKH())) {
 				checkKHStatus(
 						mqttCollector,
+						coapNetworkController,
 						configurationParameters.kHLowerBound,
 						configurationParameters.kHUpperBound,
 						configurationParameters.kHOptimalValue,
@@ -99,17 +89,19 @@ public class SmartAquariumApp {
 			
 			//check ph
 			// the ph can be changed IFF KH OK AND TEMP OK!!
-		*/	
+		
 		}
 		
 		
 		
 		/*
-		 * Testare mqtt -> app <---> coap
+		 * temp device completed
+		 * do check temp with simulateFan or simulateHeater
+		 * do temperature controller! ma non serve raccogliere alcun dato da mettere in db, solo gestione, o serve mettere on e off? forse sì
+		 * in osmotic non serviva, flow solo quando on ridondandante
+		 * creare interazione tramite il coap come on osmotic tank
 		 * Decidere gli istanti temporali, l'istante di pubblicazione deve essere lo stesso
-		 * Di conseguenza occorre salire gradualmente nella simulazione !!
-		 * Fatto questo l'interazione tra tank e sensori è finita!!
-		 * 
+
 		 * 
 		 * L'app ogni tot controlla i valori!!
 		 */

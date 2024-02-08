@@ -100,8 +100,12 @@ static void res_put_handler(coap_message_t *request, coap_message_t *response, u
 static void res_event_handler(){
 
 	if(flow == true){
+
+		//Reduce the tank level
 		tank_level -= 100.0;
+
 		LOG_INFO("Level: %f\n", tank_level);
+
 		if ( tank_level <= minimum_tank_level){
 			LOG_INFO("Tank level too low! Flow stopped!");
 			flow = false;
