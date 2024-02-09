@@ -15,10 +15,15 @@
 	<kHTopic>kH</kHTopic>
 	<temperatureTopic>temperature</temperatureTopic>
 	<osmoticWaterTankTopic>OsmoticWaterTank</osmoticWaterTankTopic>
-	<temperatureControllerTopic>TemperatureController</temperatureControllerTopic>
+	<fanTopic>fan</fanTopic>
+	<heaterTopic>heater</heaterTopic>
 	<co2DispenserTopic>co2Dispenser</co2DispenserTopic>
 	<kHLowerBound>4</kHLowerBound>
 	<kHUpperBound>6</kHUpperBound>
 	<kHOptimalValue>5</kHOptimalValue>
+	<temperatureLowerBound>23</temperatureLowerBound>
+	<temperatureUpperBound>27</temperatureUpperBound>
+	<temperatureOptimalValue>25</temperatureOptimalValue>
 	<epsilon>0.2</epsilon>
+	<epsilonTemperature>0.5</epsilonTemperature>
 </it.unipi.iot.configuration.ConfigurationParameters>

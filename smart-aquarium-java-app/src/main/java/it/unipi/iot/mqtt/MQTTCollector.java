@@ -26,7 +26,8 @@ public class MQTTCollector implements MqttCallback {
 	private final String kHTopic;
 	private final String temperatureTopic;
 	private final String osmoticWaterTankTopic;
-	private final String temperatureControllerTopic;
+	private final String fanTopic;
+	private final String heaterTopic;
 	private final String co2DispenserTopic;
 	
 	//Names of the tables in which will be stored the samples
@@ -74,7 +75,8 @@ public class MQTTCollector implements MqttCallback {
 		this.kHTopic = configurationParameters.kHTopic;
 		this.temperatureTopic = configurationParameters.temperatureTopic;
 		this.osmoticWaterTankTopic = configurationParameters.osmoticWaterTankTopic;
-		this.temperatureControllerTopic = configurationParameters.temperatureControllerTopic;
+		this.fanTopic = configurationParameters.fanTopic;
+		this.heaterTopic = configurationParameters.heaterTopic;
 		this.co2DispenserTopic = configurationParameters.co2DispenserTopic;
 
 		this.pHDatabaseTableName = configurationParameters.pHDatabaseTableName;
@@ -148,6 +150,38 @@ public class MQTTCollector implements MqttCallback {
 	public void simulateOsmoticWaterTank(String message) {
 		try {
 			mqttClient.publish( this.osmoticWaterTankTopic , new MqttMessage(message.getBytes()));
+		} catch (MqttPersistenceException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (MqttException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	/**
+	 * TODO
+	 * @param message
+	 */
+	public void simulateFan(String message) {
+		try {
+			mqttClient.publish( this.fanTopic , new MqttMessage(message.getBytes()));
+		} catch (MqttPersistenceException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (MqttException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	/**
+	 * TODO
+	 * @param message
+	 */
+	public void simulateHeater(String message) {
+		try {
+			mqttClient.publish( this.heaterTopic , new MqttMessage(message.getBytes()));
 		} catch (MqttPersistenceException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

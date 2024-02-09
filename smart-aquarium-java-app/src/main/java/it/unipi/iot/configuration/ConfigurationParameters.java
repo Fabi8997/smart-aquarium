@@ -22,12 +22,17 @@ public class ConfigurationParameters {
 	public String kHTopic;
 	public String temperatureTopic;
 	public String osmoticWaterTankTopic;
-	public String temperatureControllerTopic;
+	public String fanTopic;
+	public String heaterTopic;
 	public String co2DispenserTopic;
 	public float kHLowerBound;
 	public float kHUpperBound;
 	public float kHOptimalValue;
+	public float temperatureLowerBound;
+	public float temperatureUpperBound;
+	public float temperatureOptimalValue;
 	public float epsilon;
+	public float epsilonTemperature;
 	
 	@Override
 	public String toString() {
@@ -35,14 +40,14 @@ public class ConfigurationParameters {
 				+ ",\n databaseUsername=" + databaseUsername + ",\n databasePassword=" + databasePassword
 				+ ",\n databaseName=" + databaseName + ",\n pHDatabaseTableName=" + pHDatabaseTableName
 				+ ",\n kHDatabaseTableName=" + kHDatabaseTableName + ",\n temperatureDatabaseTableName="
-				+ temperatureDatabaseTableName + ",\n MQTTBroker=" + MQTTBroker + ",\n MQTTClientId=" + MQTTClientId
+				+ temperatureDatabaseTableName + ",\n osmoticWaterTankDatabaseTableName="
+				+ osmoticWaterTankDatabaseTableName + ",\n MQTTBroker=" + MQTTBroker + ",\n MQTTClientId=" + MQTTClientId
 				+ ",\n pHTopic=" + pHTopic + ",\n kHTopic=" + kHTopic + ",\n temperatureTopic=" + temperatureTopic
-				+ ",\n osmoticWaterTankTopic=" + osmoticWaterTankTopic + ",\n temperatureControllerTopic="
-				+ temperatureControllerTopic + ",\n co2DispenserTopic=" + co2DispenserTopic + "]\n";
+				+ ",\n osmoticWaterTankTopic=" + osmoticWaterTankTopic + ",\n fanTopic=" + fanTopic + ",\n heaterTopic="
+				+ heaterTopic + ",\n co2DispenserTopic=" + co2DispenserTopic + ",\n kHLowerBound=" + kHLowerBound
+				+ ",\n kHUpperBound=" + kHUpperBound + ",\n kHOptimalValue=" + kHOptimalValue + ",\n epsilon=" + epsilon
+				+ "]\n";
 	}
-	
-	
-	
 	
 	
 

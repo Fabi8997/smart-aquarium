@@ -207,7 +207,7 @@ have_connectivity(void)
 
 
 /*Initialized the value of the temperature to the value at the center of the interval*/
-static float temperature_value = 25.0;
+static float temperature_value = 27.0;
 
 /*Extreme of the safe interval for the temperature (to be used for leds)*/
 //static float min_temperature_value = 23.0;

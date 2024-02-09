@@ -20,12 +20,17 @@
         <xs:element type="xs:string" name="kHTopic"/>
         <xs:element type="xs:string" name="temperatureTopic"/>
         <xs:element type="xs:string" name="osmoticWaterTankTopic"/>
-        <xs:element type="xs:string" name="temperatureControllerTopic"/>
+        <xs:element type="xs:string" name="fanTopic"/>
+        <xs:element type="xs:string" name="heaterTopic"/>
         <xs:element type="xs:string" name="co2DispenserTopic"/>
         <xs:element type="xs:float" name="kHLowerBound"/>
         <xs:element type="xs:float" name="kHUpperBound"/>
         <xs:element type="xs:float" name="kHOptimalValue"/>
+        <xs:element type="xs:float" name="temperatureLowerBound"/>
+        <xs:element type="xs:float" name="temperatureUpperBound"/>
+        <xs:element type="xs:float" name="temperatureOptimalValue"/>
         <xs:element type="xs:float" name="epsilon"/>
+        <xs:element type="xs:float" name="epsilonTemperature"/>
       </xs:sequence>
     </xs:complexType>
   </xs:element>

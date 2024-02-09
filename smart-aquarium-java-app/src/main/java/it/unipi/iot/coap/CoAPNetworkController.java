@@ -118,7 +118,7 @@ public class CoAPNetworkController extends CoapServer {
 			//setObservable(true); USELESS?
 	 	}
 		
-		//TODO GET handle, but maybe it is not required
+		//TODO GET handle, to obtain from the app what devices are registered
 	 	public void handleGET(CoapExchange exchange) {
 	 		
 	 		Response response = new Response(ResponseCode.CONTENT);

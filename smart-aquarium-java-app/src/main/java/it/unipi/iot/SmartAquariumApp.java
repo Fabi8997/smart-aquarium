@@ -85,7 +85,17 @@ public class SmartAquariumApp {
 						configurationParameters.epsilon);
 			}
 			
-			//check temp
+			//If the temperature sensor has published a new temperature value then check its value
+			if((coapNetworkController != null) && (mqttCollector.isNewCurrentTemperature())) {
+				checkTemperatureStatus(
+						mqttCollector,
+						coapNetworkController,
+						configurationParameters.temperatureLowerBound,
+						configurationParameters.temperatureUpperBound,
+						configurationParameters.temperatureOptimalValue,
+						configurationParameters.epsilonTemperature);
+			}
+			
 			
 			//check ph
 			// the ph can be changed IFF KH OK AND TEMP OK!!
@@ -96,6 +106,8 @@ public class SmartAquariumApp {
 		
 		/*
 		 * temp device completed
+		 * add lb ub e opt temp
+		 * 
 		 * do check temp with simulateFan or simulateHeater
 		 * do temperature controller! ma non serve raccogliere alcun dato da mettere in db, solo gestione, o serve mettere on e off? forse sì
 		 * in osmotic non serviva, flow solo quando on ridondandante
@@ -140,4 +152,50 @@ public class SmartAquariumApp {
 		}
 	}
 
+	
+private static void checkTemperatureStatus(MQTTCollector mqttCollector, CoAPNetworkController coapNetworkController, float lowerBound, float upperBound, float optimalValue, float epsilon) {
+		
+	
+		//If kH < LB and the heater is not active
+		if(((mqttCollector.getCurrentTemperature()) < lowerBound) && coapNetworkController.getTemperatureController().areFanHeaterInactive()) {
+			
+			//Activate the simulation on temperature device
+			mqttCollector.simulateHeater("on");
+			
+			//Send the command to the actuator to start the heater: mode=on
+			coapNetworkController.getTemperatureController().activateHeater();
+			
+		//If kH > UB and the fan is not active
+		}else if ((mqttCollector.getCurrentTemperature() > upperBound && coapNetworkController.getTemperatureController().areFanHeaterInactive()) ) {
+			
+			//Activate the simulation on temperature device
+			mqttCollector.simulateFan("on");
+			
+			//Send the command to the actuator to start the fan: mode=on
+			coapNetworkController.getTemperatureController().activateFan();
+			
+			
+		//If temperature in [ OptTemp - epsilon, OptTemp + epsilon] where optTemp is the optimum value for temperature
+		}else if ((mqttCollector.getCurrentTemperature() > optimalValue - epsilon) && (mqttCollector.getCurrentTemperature() < (optimalValue + epsilon) && (coapNetworkController.getTemperatureController().isFanActive() || coapNetworkController.getTemperatureController().isHeaterActive()))) {
+			
+			//If the fan is active, turn it off
+			if(coapNetworkController.getTemperatureController().isFanActive()) {
+				
+				//Activate the simulation on temperature device
+				mqttCollector.simulateFan("off");
+				
+				//Send the command to the actuator to stop the fan: mode=off
+				coapNetworkController.getTemperatureController().stopFan();
+				
+			//If the heater is active, turn it off
+			}else if(coapNetworkController.getTemperatureController().isHeaterActive()) {
+				
+				//Activate the simulation on temperature device
+				mqttCollector.simulateHeater("off");
+				
+				//Send the command to the actuator to stop the heater: mode=off
+				coapNetworkController.getTemperatureController().stopHeater();;
+			}
+		}
+	}
 }

@@ -22,7 +22,8 @@
 #define REGISTRATION_INTERVAL 1
 
 // Define the resource
-//extern coap_resource_t res_leds;
+extern coap_resource_t res_fan;
+extern coap_resource_t res_heater;
 
 // Service URL
 char *service_url = "/registration";
@@ -102,8 +103,9 @@ PROCESS_THREAD(temperature_controller, ev, data)
   //Led yellow to notify that the device is not connected yet
   leds_toggle(LEDS_YELLOW);
 
-  //TODO Activate the resource!!
-  //coap_activate_resource(&res_leds, "led");
+  //Activate the resource!!
+  coap_activate_resource(&res_fan, "temperature/fan");
+  coap_activate_resource(&res_heater, "temperature/heater");
 
   LOG_INFO("Connectiong to the Border Router... \n");
 
