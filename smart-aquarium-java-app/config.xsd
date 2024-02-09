@@ -29,6 +29,9 @@
         <xs:element type="xs:float" name="temperatureLowerBound"/>
         <xs:element type="xs:float" name="temperatureUpperBound"/>
         <xs:element type="xs:float" name="temperatureOptimalValue"/>
+        <xs:element type="xs:float" name="pHLowerBound"/>
+        <xs:element type="xs:float" name="pHUpperBound"/>
+        <xs:element type="xs:float" name="pHOptimalValue"/>
         <xs:element type="xs:float" name="epsilon"/>
         <xs:element type="xs:float" name="epsilonTemperature"/>
       </xs:sequence>

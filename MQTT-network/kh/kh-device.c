@@ -15,9 +15,8 @@
 #include <string.h>
 #include <strings.h>
 /*---------------------------------------------------------------------------*/
-#define LOG_MODULE "kh device"
+#define LOG_MODULE "kH device"
 #define LOG_LEVEL LOG_LEVEL_INFO
-
 
 /*---------------------------------------------------------------------------*/
 /* MQTT broker address. */
@@ -118,13 +117,13 @@ mqtt_event(struct mqtt_connection *m, mqtt_event_t event, void *data)
 {
   switch(event) {
   case MQTT_EVENT_CONNECTED: {
-    printf("[kH device] Application has a MQTT connection\n");
+    LOG_INFO("Application has a MQTT connection\n");
 
     state = STATE_CONNECTED;
     break;
   }
   case MQTT_EVENT_DISCONNECTED: {
-    printf("[kH device] MQTT Disconnect. Reason %u\n", *((mqtt_event_t *)data));
+    LOG_INFO("MQTT Disconnect. Reason %u\n", *((mqtt_event_t *)data));
 
     state = STATE_DISCONNECTED;
     process_poll(&mqtt_kH_process);
@@ -142,25 +141,25 @@ mqtt_event(struct mqtt_connection *m, mqtt_event_t event, void *data)
     mqtt_suback_event_t *suback_event = (mqtt_suback_event_t *)data;
 
     if(suback_event->success) {
-      printf("[kH device] Application is subscribed to topic successfully\n");
+      LOG_INFO("Application is subscribed to topic successfully\n");
     } else {
-      printf("[kH device] Application failed to subscribe to topic (ret code %x)\n", suback_event->return_code);
+      LOG_INFO("Application failed to subscribe to topic (ret code %x)\n", suback_event->return_code);
     }
 #else
-    printf("[kH device] Application is subscribed to topic successfully\n");
+    LOG_INFO("Application is subscribed to topic successfully\n");
 #endif
     break;
   }
   case MQTT_EVENT_UNSUBACK: {
-    printf("[kH device] Application is unsubscribed to topic successfully\n");
+    LOG_INFO("Application is unsubscribed to topic successfully\n");
     break;
   }
   case MQTT_EVENT_PUBACK: {
-    printf("[kH device] Publishing complete.\n");
+    LOG_INFO("Publishing complete.\n");
     break;
   }
   default:
-    printf("[kH device] Application got a unhandled MQTT event: %i\n", event);
+    LOG_INFO("Application got a unhandled MQTT event: %i\n", event);
     break;
   }
 }
@@ -246,7 +245,7 @@ PROCESS_THREAD(mqtt_kH_process, ev, data)
   mqtt_status_t status;
   char broker_address[CONFIG_IP_ADDR_STR_LEN];
 
-  printf("MQTT kH Process\n");
+  LOG_INFO("MQTT kH Process\n");
 
   // Initialize the ClientID as MAC address
   snprintf(client_id, BUFFER_SIZE, "%02x%02x%02x%02x%02x%02x",
@@ -278,7 +277,7 @@ PROCESS_THREAD(mqtt_kH_process, ev, data)
 		  
 		  if(state == STATE_NET_OK){
 			  // Connect to MQTT server
-			  printf("[kH device] Connecting to the MQTT server!\n");
+			  LOG_INFO("Connecting to the MQTT server!\n");
 			  
 			  memcpy(broker_address, broker_ip, strlen(broker_ip));
 			  
@@ -295,9 +294,9 @@ PROCESS_THREAD(mqtt_kH_process, ev, data)
 
 			  status = mqtt_subscribe(&conn, NULL, sub_topic, MQTT_QOS_LEVEL_0);
 
-			  printf("[kH device] Subscribing to topic OsmoticWaterTank for simulation purposes!\n");
+			  LOG_INFO("Subscribing to topic OsmoticWaterTank for simulation purposes!\n");
 			  if(status == MQTT_STATUS_OUT_QUEUE_FULL) {
-				LOG_ERR("[kH device] Tried to subscribe but command queue was full!\n");
+				LOG_ERR("Tried to subscribe but command queue was full!\n");
 				PROCESS_EXIT();
 			  }
 			  
@@ -320,7 +319,7 @@ PROCESS_THREAD(mqtt_kH_process, ev, data)
                		strlen(app_buffer), MQTT_QOS_LEVEL_0, MQTT_RETAIN_OFF);
 		
 		} else if ( state == STATE_DISCONNECTED ){
-		   LOG_ERR("[kH device] Disconnected from MQTT broker\n");		
+		   LOG_ERR("Disconnected from MQTT broker\n");		
 		   state = STATE_INIT;
 
 		}

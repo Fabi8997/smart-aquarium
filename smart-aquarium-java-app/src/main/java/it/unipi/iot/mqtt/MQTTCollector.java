@@ -191,6 +191,22 @@ public class MQTTCollector implements MqttCallback {
 		}
 	}
 	
+	/**
+	 * TODO
+	 * @param message
+	 */
+	public void simulateCo2Dispenser(String message) {
+		try {
+			mqttClient.publish( this.co2DispenserTopic , new MqttMessage(message.getBytes()));
+		} catch (MqttPersistenceException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (MqttException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
 	@Override
 	public void connectionLost(Throwable cause) {
 		// TODO Auto-generated method stub

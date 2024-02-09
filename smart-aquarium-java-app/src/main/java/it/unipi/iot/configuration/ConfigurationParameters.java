@@ -31,6 +31,9 @@ public class ConfigurationParameters {
 	public float temperatureLowerBound;
 	public float temperatureUpperBound;
 	public float temperatureOptimalValue;
+	public float pHLowerBound;
+	public float pHUpperBound;
+	public float pHOptimalValue;
 	public float epsilon;
 	public float epsilonTemperature;
 	
