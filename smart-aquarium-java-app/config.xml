@@ -24,9 +24,9 @@
 	<temperatureLowerBound>23</temperatureLowerBound>
 	<temperatureUpperBound>27</temperatureUpperBound>
 	<temperatureOptimalValue>25</temperatureOptimalValue>
-	<pHLowerBound>7</pHLowerBound>
+	<pHLowerBound>6</pHLowerBound>
 	<pHUpperBound>8</pHUpperBound>
-	<pHOptimalValue>6</pHOptimalValue>
+	<pHOptimalValue>7</pHOptimalValue>
 	<epsilon>0.2</epsilon>
 	<epsilonTemperature>0.5</epsilonTemperature>
 </it.unipi.iot.configuration.ConfigurationParameters>

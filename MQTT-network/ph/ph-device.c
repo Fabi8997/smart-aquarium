@@ -93,17 +93,22 @@ static void
 pub_handler(const char *topic, uint16_t topic_len, const uint8_t *chunk,
             uint16_t chunk_len)
 {
-  if(strcmp(topic, "CO2") == 0) {
+
+ 	LOG_INFO("Pub Handler: topic='%s' (len=%u), chunk_len=%u, %s \n", topic, topic_len, chunk_len, chunk);
+  if(strcmp(topic, "co2Dispenser") == 0) {
     
-	//LOG_INFO("Pub Handler: topic='%s' (len=%u), chunk_len=%u, %s \n", topic, topic_len, chunk_len, chunk);
+	LOG_INFO("Pub Handler: topic='%s' (len=%u), chunk_len=%u, %s \n", topic, topic_len, chunk_len, chunk);
 	
-	//TODO Add different behaviour based on the change of the co2, if the change is over a certain threshold is higher
-	if(strcmp((const char*) chunk, "OFF") == 0) { //No water flow
+	if(strcmp((const char*) chunk, "OFF") == 0) { //No change in CO2, random behavior
 		co2_erogation_variation = 0;
-	} else if(strcmp((const char*) chunk, "DEC") == 0) { //Water flow to reduce the kH
+	} else if(strcmp((const char*) chunk, "SDEC") == 0) { //Soft decrease of co2 to increase slowly the pH
 		co2_erogation_variation = -1;
-	} else if(strcmp((const char*) chunk, "INC") == 0)  { //Water flow to increase the kH
+	} else if(strcmp((const char*) chunk, "SINC") == 0)  { //Soft increase of co2 to decrease slowly the pH
 		co2_erogation_variation = 1;
+	} else if(strcmp((const char*) chunk, "DEC") == 0) { //Decrease of co2 to increase the pH
+		co2_erogation_variation = -2;
+	} else if(strcmp((const char*) chunk, "INC") == 0)  { //Increase of co2 to decrease the pH
+		co2_erogation_variation = 2;
 	}
 
     return;
@@ -178,7 +183,7 @@ have_connectivity(void)
 
 
 /*Initialized the value of the pH to the value at the center of the interval*/
-static float pH_value = 7.0;
+static float pH_value = 6.0;
 
 /*Extreme of the safe interval for the pH (to be used for leds)*/
 //static float min_pH_value = 6.5;
@@ -188,11 +193,8 @@ static float pH_value = 7.0;
   variation in case of stabilization using CO2*/
 static float max_pH_variation = 0.2;
 static float pH_variation_co2 = 0.05;
+static float soft_pH_variation_co2 = 0.02;
 
-/*If CO2_variation = 0 => no stabilization of pH active (START STATE)
-  if CO2_variation = -1 => the CO2 erogation tries to reduce the pH gradually
-  if CO2_variation = 1 => the CO2 erogation tries to increase the pH gradually
-*/
 /*
   NOTE: for simulation purposes this value is changed based on the value publiced in the topic related to the OsmoticWaterTank
 	changes, that is a topic created ONLY to make the simulation coherent. 
@@ -228,19 +230,23 @@ static void change_pH_simulation(){
 			}			
 		}
 
-	//TODO Change based on the variation of CO2!!! more variation, more red/inc in pH!!! 
 	/*The CO2 erogation tries to reduce the pH value, it is done gradually to avoid to harm the fishes*/
 	}else if(co2_erogation_variation == -1){
-		pH_value -= pH_variation_co2;
+		pH_value += soft_pH_variation_co2; //Soft increase in co2 erogation to softly decrease the pH
+
+	/*The CO2 erogation tries to reduce the pH value, it is done gradually to avoid to harm the fishes*/
+	}else if(co2_erogation_variation == -2){ 
+		pH_value += pH_variation_co2; //Increase in co2 erogation to decrease the pH
 
 	/*The CO2 erogation tries to increase the pH value, it is done gradually to avoid to harm the fishes*/
-	} else if(co2_erogation_variation == 1){
-		pH_value += pH_variation_co2;
+	}else if(co2_erogation_variation == 1){
+		pH_value -= soft_pH_variation_co2; //Soft decrease in co2 erogation to softly increase the pH
+
+	/*The CO2 erogation tries to reduce the pH value, it is done gradually to avoid to harm the fishes*/
+	}else if(co2_erogation_variation == 2){
+		pH_value -= pH_variation_co2; //Decrease in co2 erogation to increase the pH
 	}
 }
-
-/*TODO:	Cambiamenti dati dalla CO2 proporzionali al kH????? maggiore è il kh
-	minore sarà il cambiamento del pH, molto bella come idea*/
 
 /*---------------------------------------------------------------------------*/
 /*---------------------------------------------------------------------------*/
@@ -299,7 +305,7 @@ PROCESS_THREAD(mqtt_pH_process, ev, data)
 		  if(state==STATE_CONNECTED){
 		  
 			  // Subscribe to a topic
-			  strcpy(sub_topic,"CO2");
+			  strcpy(sub_topic,"co2Dispenser");
 
 			  status = mqtt_subscribe(&conn, NULL, sub_topic, MQTT_QOS_LEVEL_0);
 
@@ -331,7 +337,7 @@ PROCESS_THREAD(mqtt_pH_process, ev, data)
 		   state = STATE_INIT;
 		}
 		
-		etimer_set(&periodic_timer, STATE_MACHINE_PERIODIC);
+		etimer_set(&periodic_timer, SHORT_PUBLISH_INTERVAL);
       
     }
 

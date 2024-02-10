@@ -100,7 +100,7 @@ public class SmartAquariumApp {
 			//If the pH sensor has published a new temperature value then check its value
 			//The control of the pH is more difficult, since we've to modify it only when the kH and the temperature  is stable
 			// only in this case we can modify the pH in order to not harm the fishes.
-			if((coapNetworkController != null) && (mqttCollector.isNewCurrentTemperature())) {
+			if((coapNetworkController != null) && (mqttCollector.isNewCurrentPH())) {
 				checkPHStatus(
 						mqttCollector,
 						coapNetworkController,
@@ -163,7 +163,7 @@ public class SmartAquariumApp {
 	}
 
 	
-private static void checkTemperatureStatus(MQTTCollector mqttCollector, CoAPNetworkController coapNetworkController, float lowerBound, float upperBound, float optimalValue, float epsilon) {
+	private static void checkTemperatureStatus(MQTTCollector mqttCollector, CoAPNetworkController coapNetworkController, float lowerBound, float upperBound, float optimalValue, float epsilon) {
 		
 	
 		//If kH < LB and the heater is not active
@@ -216,19 +216,20 @@ private static void checkTemperatureStatus(MQTTCollector mqttCollector, CoAPNetw
 		//If kH < LB ADD && !coapNetworkController.getOsmoticWaterTank().isOsmoticWaterTankFlowActive()
 		if(((mqttCollector.getCurrentPH()) < lowerBound) ) {
 			
-			//Activate the simulation on pH device
-			//mqttCollector.simulateOsmoticWaterTank("INC");
-			
 			//Compute the CO2 to be released
+			//If the difference in CO2 level to be dispensed is significant then change the pH
+			
+			//Activate the simulation on pH device
+			mqttCollector.simulateCo2Dispenser("SDEC");
 			
 			//Send the command to the actuator to start the flow: mode=on
 			//coapNetworkController.getOsmoticWaterTank().activateFlow();
 			
 		//If kH > UB ADD && !coapNetworkController.getOsmoticWaterTank().isOsmoticWaterTankFlowActive()
-		}else if ((mqttCollector.getCurrentKH() > upperBound ) ) {
+		}else if ((mqttCollector.getCurrentPH() > upperBound ) ) {
 			
-			//Activate the simulation on kH device
-			//mqttCollector.simulateOsmoticWaterTank("DEC");
+			//Activate the simulation on pH device
+			mqttCollector.simulateCo2Dispenser("SINC");
 			
 			//Compute the CO2 to be released
 			
@@ -237,10 +238,10 @@ private static void checkTemperatureStatus(MQTTCollector mqttCollector, CoAPNetw
 			
 			
 		//If    kH in [ OptKH - epsilon, OptKH + epsilon] where optKH is the optimum value for kH && coapNetworkController.getOsmoticWaterTank().isOsmoticWaterTankFlowActive()
-		}else if ((mqttCollector.getCurrentKH() > optimalValue - epsilon) && (mqttCollector.getCurrentKH() < (optimalValue + epsilon)) ) {
+		}else if ((mqttCollector.getCurrentPH() > optimalValue - epsilon) && (mqttCollector.getCurrentPH() < (optimalValue + epsilon)) ) {
 			
 			//Activate the simulation on kH device
-			//mqttCollector.simulateOsmoticWaterTank("OFF");
+			mqttCollector.simulateCo2Dispenser("OFF");
 			
 			//Compute the CO2 to be released
 			
@@ -248,4 +249,5 @@ private static void checkTemperatureStatus(MQTTCollector mqttCollector, CoAPNetw
 			//coapNetworkController.getOsmoticWaterTank().stopFlow();
 		}
 	}
+	
 }
