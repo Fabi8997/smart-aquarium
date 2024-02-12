@@ -51,7 +51,6 @@ static struct etimer flow_timer;
 //Button to be used to signal the fill of the tank
 static button_hal_button_t *btn;
 
-
 /* This function is will be passed to COAP_BLOCKING_REQUEST() to handle responses. */
 void client_chunk_handler(coap_message_t *response)
 {
@@ -112,7 +111,7 @@ PROCESS_THREAD(osmotic_water_device, ev, data)
   //Led yellow to notify that the device is not connected yet
   leds_toggle(LEDS_YELLOW);
 
-  coap_activate_resource(&res_tank, "tank");
+  coap_activate_resource(&res_tank, "OsmoticWaterTank/tank");
 
   LOG_INFO("Connectiong to the Border Router... \n");
 

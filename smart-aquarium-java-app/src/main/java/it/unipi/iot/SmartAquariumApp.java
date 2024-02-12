@@ -113,17 +113,25 @@ public class SmartAquariumApp {
 		
 		
 		
+		
+		
+		//CO2 computation at the end
+		
+		
 		/*
-		 * ADD simulate in MQTT Collector
-		 * temp device completed
-		 * add lb ub e opt temp
+		 * Fare il co2dispenser coap client
+		 * Aggiungere l'observer
+		 * Creare la tabella per la co2, livello della bombola e co2 erogata
 		 * 
-		 * do check temp with simulateFan or simulateHeater
-		 * do temperature controller! ma non serve raccogliere alcun dato da mettere in db, solo gestione, o serve mettere on e off? forse sì
-		 * in osmotic non serviva, flow solo quando on ridondandante
-		 * creare interazione tramite il coap come on osmotic tank
+		 * Testare
+		 * 
+		 * ULTIMO STEP:
+		 * 
+		 * Calcolo livello co2 si può fare come ultima cosa
+		 * Forse il check del ph è da modificare e la variazione va cambiata solo quando il livello di ph è troppo basso o alto
+		 * Quindi la CO2 è sempre attiva, in base alla variazione di CO2 il ph cambia, da poco a molto!!
 		 * Decidere gli istanti temporali, l'istante di pubblicazione deve essere lo stesso
-
+		 *
 		 * 
 		 * L'app ogni tot controlla i valori!!
 		 */

@@ -18,7 +18,7 @@ public class OsmoticWaterTank extends CoapClient{
 		//MAX_CAPACITY = configurationParameters.maxCapacityOsmoticWaterTank;
 		//current_level = MAX_CAPACITY;
 		
-		super("coap://[" + ipAddress + "]/tank");
+		super("coap://[" + ipAddress + "]/"+configurationParameters.osmoticWaterTankTopic+"/tank");
 		
 		this.osmoticWaterTankFlowActive = false;
 	}
