@@ -7,16 +7,29 @@ import org.eclipse.californium.core.coap.MediaTypeRegistry;
 
 import it.unipi.iot.configuration.ConfigurationParameters;
 
+/**
+ * 
+ * This class extends the CoapClient class. <br> It provides the methods to: <br>
+ * 
+ * - activate the flow of osmotic water <br>
+ * - stop the flow of osmotic water
+ * 
+ * @author Fabi8997
+ * 
+ */
 public class OsmoticWaterTank extends CoapClient{
 	
 	//Osmotic water tank status
 	float osmoticWaterTankLevel;
 	boolean osmoticWaterTankFlowActive;
 	
+	/**
+	 * Class constructor.
+	 * 
+	 * @param ipAddress of the URI
+	 * @param configurationParameters configuration parameters
+	 */
 	public OsmoticWaterTank(String ipAddress, ConfigurationParameters configurationParameters) {
-		
-		//MAX_CAPACITY = configurationParameters.maxCapacityOsmoticWaterTank;
-		//current_level = MAX_CAPACITY;
 		
 		super("coap://[" + ipAddress + "]/"+configurationParameters.osmoticWaterTankTopic+"/tank");
 		
@@ -27,7 +40,7 @@ public class OsmoticWaterTank extends CoapClient{
 		
 		//send put mode on
 		this.put(new CoapHandler() {
-            
+           
 			@Override
             public void onLoad(CoapResponse response) {
                 if (response != null) {

@@ -39,6 +39,7 @@ public class CoAPNetworkController extends CoapServer {
 	
 	//DB table names
     private final String osmoticWaterTankDatabaseTableName;
+	private final String co2DispenserDatabaseTableName;
 	
 	//ConfigurationParameters
 	ConfigurationParameters configurationParameters;
@@ -57,6 +58,7 @@ public class CoAPNetworkController extends CoapServer {
 		this.configurationParameters = configurationParameters;
 		this.db = db;
 		this.osmoticWaterTankDatabaseTableName = configurationParameters.osmoticWaterTankDatabaseTableName;
+		this.co2DispenserDatabaseTableName = configurationParameters.co2DispenserDatabaseTableName;
 	}
 	
 	/**
@@ -138,7 +140,7 @@ public class CoAPNetworkController extends CoapServer {
 	 	 */
 		public void handlePOST(CoapExchange exchange) {
 			//Debug
-			//System.out.println("[CoAPNetworkController] new message received: " + exchange.getRequestText());
+			//System.out.println("[CoAP Network Controller] new message received: " + exchange.getRequestText());
 			
 			//Retrieve the ipAddress of the sender
 			String ipAddress = exchange.getSourceAddress().getHostAddress();
@@ -213,7 +215,7 @@ public class CoAPNetworkController extends CoapServer {
 									    osmoticWaterTank.setOsmoticWaterTankLevel(new Float((Double) requestTextJSON.get("level")));
 									    
 									    //Insert the sample in the DB
-									    db.insertSample(osmoticWaterTankDatabaseTableName, osmoticWaterTank.getOsmoticWaterTankLevel());
+									    db.insertSample(osmoticWaterTankDatabaseTableName, osmoticWaterTank.getOsmoticWaterTankLevel(), null);
 									    
 									    //LOG
 									    System.out.println("[CoAP Network Controller] Inserted " + requestTextJSON.toJSONString() + " in " + osmoticWaterTankDatabaseTableName + "." );
@@ -225,13 +227,13 @@ public class CoAPNetworkController extends CoapServer {
 							});
 
 					
-					System.out.println("[CoAPNetworkController] new " + device + " registered!");
+					System.out.println("[CoAP Network Controller] new " + device + " registered!");
 					
 					//Set the response code and the payload message
 					exchange.respond(ResponseCode.CREATED, "registered");
 				}else {
 					
-					System.out.println("[CoAPNetworkController] " + device + " already registered!");
+					System.out.println("[CoAP Network Controller] " + device + " already registered!");
 					
 					//Device already registered
 					exchange.respond(ResponseCode.BAD_REQUEST);
@@ -245,14 +247,70 @@ public class CoAPNetworkController extends CoapServer {
 					
 					//Create a new CoAP Client
 					co2Dispenser = new CO2Dispenser(ipAddress,configurationParameters);
+					
+					//Create the observer relation
+					observeTankRelation = co2Dispenser.observe(
+							new CoapHandler() {
+								@Override public void onLoad(CoapResponse response) {
+									
+									//Objects to handle the JSON format
+									JSONParser parser = new JSONParser();
+									JSONObject requestTextJSON = null;
+									
+									try {
+										requestTextJSON = (JSONObject) parser.parse(response.getResponseText());
+									} catch (ParseException e) {
+										// TODO Auto-generated catch block
+										e.printStackTrace();
+										
+									}
+
+									//If correctly parsed
+									if(requestTextJSON != null) {
+										
+										//Retrieve the mode field since if the flow can be stopped due to low level 
+										String mode = (String) requestTextJSON.get("mode");
+										
+										//Check if the mode is changed and set the flag
+										if(mode.equals("on") && !co2Dispenser.isCo2DispenserTankFlowActive()) {
+											
+											//Set the flow as active
+											co2Dispenser.setCo2DispenserTankFlowActive(true);
+											
+										}else if(mode.equals("off") && co2Dispenser.isCo2DispenserTankFlowActive()){
+											
+											//Set the flow as inactive
+											co2Dispenser.setCo2DispenserTankFlowActive(false);
+											
+										}
+						
+										//Retrieve the tank level
+									    co2Dispenser.setCo2DispenserTankLevel(new Float((Double) requestTextJSON.get("level")));
+									    
+									    //Insert the sample in the DB
+									    db.insertSample(co2DispenserDatabaseTableName,
+									    				co2Dispenser.getCurrentCO2(),
+									    				co2Dispenser.getCo2DispenserTankLevel());
+									    
+									    //LOG
+									    System.out.println("[CoAP Network Controller] Inserted ( " +
+									    				"Level: " + co2Dispenser.getCo2DispenserTankLevel() + " " +
+									    				"Value: " + co2Dispenser.getCurrentCO2() + 
+									    				" ) in " + co2DispenserDatabaseTableName + "." );
+									}
+								}
+								@Override public void onError() {
+									System.err.println("-Failed--------");
+								}
+							});
 				
-					System.out.println("[CoAPNetworkController] new " + device + " registered!");
+					System.out.println("[CoAP Network Controller] new " + device + " registered!");
 					
 					//Set the response code and the payload message
 					exchange.respond(ResponseCode.CREATED, "registered");
 				}else {
 					
-					System.out.println("[CoAPNetworkController] " + device + " already registered!");
+					System.out.println("[CoAP Network Controller] " + device + " already registered!");
 					
 					//Device already registered
 					exchange.respond(ResponseCode.BAD_REQUEST);
@@ -267,13 +325,13 @@ public class CoAPNetworkController extends CoapServer {
 					//Create a new CoAP Client
 					temperatureController = new TemperatureController(ipAddress,configurationParameters);
 					
-					System.out.println("[CoAPNetworkController] new " + device + " registered!");
+					System.out.println("[CoAP Network Controller] new " + device + " registered!");
 					
 					//Set the response code and the payload message
 					exchange.respond(ResponseCode.CREATED, "registered");
 				}else {
 					
-					System.out.println("[CoAPNetworkController] " + device + " already registered!");
+					System.out.println("[CoAP Network Controller] " + device + " already registered!");
 					
 					//Device already registered
 					exchange.respond(ResponseCode.BAD_REQUEST);

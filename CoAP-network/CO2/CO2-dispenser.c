@@ -180,7 +180,7 @@ PROCESS_THREAD(co2_dispenser, ev, data)
 		etimer_reset(&flow_timer);
 
 	}else if((ev == button_hal_periodic_event) && (to_be_filled == true)) {
-	//IF the button has been pressed AND the water tank must be filled		
+	//IF the button has been pressed AND the co2 tank must be filled		
 	  
 	  //Retrieve the data about the button
 	  btn = (button_hal_button_t *)data;
@@ -188,18 +188,21 @@ PROCESS_THREAD(co2_dispenser, ev, data)
           //Blink (every second the red blink during the pression)
 	  leds_toggle(LEDS_RED);
 
-	  //If it is pressed for 5 second it means that the water is filled
+	  //If it is pressed for 5 second it means that the co2 is filled
 	  if(btn->press_duration_seconds == 5) {
 		
 		  //Reset the boolean variable
 		  to_be_filled = false;
 
-	          //Put the tank to its maximum level
+	          //TODO Put the tank to its maximum level
 		  tank_level = 5000.0;
 
 		  //Turn on the green led and turn off the red led
 		  leds_off(LEDS_RED);
 		  leds_on(LEDS_GREEN);
+
+		  //Start the flow again
+		  flow = true;
 
 		  res_tank.trigger();
 	

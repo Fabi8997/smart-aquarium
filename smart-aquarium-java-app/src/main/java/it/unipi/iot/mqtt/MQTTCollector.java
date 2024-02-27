@@ -15,9 +15,12 @@ import it.unipi.iot.temperature.TemperatureSample;
 
 
 /**
- * 
+ * This class is used to handle the interaction between the MQTT-based devices and the SmartAquariumAPP. <br>
+ * It subscribes to the topics in which the sensors will publish their values; It manages the interaction with the database inserting 
+ * the received values in the correct tables and manages the publishes messages in order to implement the simulation of the values
+ * of the sensors in the correct way.
  * @author Fabi8997
- * TODO 
+ * 
  */
 public class MQTTCollector implements MqttCallback {
 	
@@ -160,7 +163,8 @@ public class MQTTCollector implements MqttCallback {
 	}
 	
 	/**
-	 * TODO
+	 * Send a message to simulate the fan status. This methods is published in the fan topic, the temperature device will read it
+	 * and simulates its behavior accordingly.
 	 * @param message
 	 */
 	public void simulateFan(String message) {
@@ -176,7 +180,8 @@ public class MQTTCollector implements MqttCallback {
 	}
 	
 	/**
-	 * TODO
+	 * Send a message to simulate the heater status. This methods is published in the heater topic, the temperature device will read it
+	 * and simulates its behavior accordingly.
 	 * @param message
 	 */
 	public void simulateHeater(String message) {
@@ -192,7 +197,8 @@ public class MQTTCollector implements MqttCallback {
 	}
 	
 	/**
-	 * TODO
+	 * Send a message to simulate the CO2 dispensed. This methods is published in the co2 topic, the PH device will read it
+	 * and simulates its behavior accordingly.
 	 * @param message
 	 */
 	public void simulateCo2Dispenser(String message) {
@@ -207,6 +213,7 @@ public class MQTTCollector implements MqttCallback {
 		}
 	}
 	
+	//TODO How to handle lost of connection
 	@Override
 	public void connectionLost(Throwable cause) {
 		// TODO Auto-generated method stub
@@ -226,7 +233,7 @@ public class MQTTCollector implements MqttCallback {
 			//System.out.println(String.format("[%s] %s", topic, pHSample));
 			
 			//Insert in the table passed as first argument the pH value passed as second argument
-			db.insertSample(this.pHDatabaseTableName, pHSample.getpHValue() );
+			db.insertSample(this.pHDatabaseTableName, pHSample.getpHValue(), null);
 			
 			//Update the current value
 			this.currentPH = pHSample.getpHValue();
@@ -244,7 +251,7 @@ public class MQTTCollector implements MqttCallback {
 			//System.out.println(String.format("[%s] %s", topic, kHSample));
 			
 			//Insert in the table passed as first argument the kH value passed as second argument
-			db.insertSample(this.kHDatabaseTableName, kHSample.getkHValue() );
+			db.insertSample(this.kHDatabaseTableName, kHSample.getkHValue() , null);
 			
 			//Update the current value
 			this.currentKH = kHSample.getkHValue();
@@ -263,7 +270,7 @@ public class MQTTCollector implements MqttCallback {
 			//System.out.println(String.format("[%s] %s", topic, temperatureSample));
 			
 			//Insert in the table passed as first argument the temperature value passed as second argument
-			db.insertSample(this.temperatureDatabaseTableName, temperatureSample.getTemperatureValue() );
+			db.insertSample(this.temperatureDatabaseTableName, temperatureSample.getTemperatureValue() , null);
 			
 			//Update the current value
 			this.currentTemperature = temperatureSample.getTemperatureValue();

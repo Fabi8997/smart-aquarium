@@ -28,12 +28,15 @@ public class DatabaseManager {
     private final String kHDatabaseTableName;
     private final String temperatureDatabaseTableName;
     private final String osmoticWaterTankDatabaseTableName;
+    private final String co2DispenserDatabaseTableName;
     
     //Prepared statement to be used during the insertion
     private PreparedStatement preparedStatementPH;
     private PreparedStatement preparedStatementKH;
     private PreparedStatement preparedStatementTemperature;
     private PreparedStatement preparedStatementOsmoticWaterTank;
+    private PreparedStatement preparedStatementCO2Dispenser;
+    
     //Connection to the DB
     private Connection connection;
     
@@ -54,6 +57,7 @@ public class DatabaseManager {
 		this.kHDatabaseTableName = configurationParameters.kHDatabaseTableName;
 		this.temperatureDatabaseTableName = configurationParameters.temperatureDatabaseTableName;
 		this.osmoticWaterTankDatabaseTableName = configurationParameters.osmoticWaterTankDatabaseTableName;
+		this.co2DispenserDatabaseTableName = configurationParameters.co2DispenserDatabaseTableName;
 		
 		//Create the connection to MYSQL
 		StringBuilder stringBuilder = new StringBuilder("jdbc:mysql://");
@@ -78,6 +82,9 @@ public class DatabaseManager {
 			//Create a prepared statement to interact when the table is OsmoticWaterTank
 			preparedStatementOsmoticWaterTank = connection.prepareStatement("INSERT INTO " +  this.osmoticWaterTankDatabaseTableName + " (value) VALUES (?)");
 		
+			//Create a prepared statement to interact when the table is CO2Dispenser
+			preparedStatementCO2Dispenser = connection.prepareStatement("INSERT INTO " +  this.co2DispenserDatabaseTableName + " (level, value) VALUES (?,?)");
+			
 		} catch (SQLException e) {
 			System.out.println("[DatabaseManager] Error during the connection to the database.");
 			e.printStackTrace();
@@ -89,8 +96,9 @@ public class DatabaseManager {
 	 * This method allows to insert in the connected database the value passed as second parameter inside the table passed as first argument.
 	 * @param table in which the value must be inserted
 	 * @param value to insert inside the table
+	 * @param level used if the table is CO2Dispenser
 	 */
-    public boolean insertSample(String table, float value) {
+    public boolean insertSample(String table, float value, Float level) {
     	
         try {
         	
@@ -146,6 +154,20 @@ public class DatabaseManager {
         		//If something bad happens throw an exception, the program must continue
         		if(preparedStatementOsmoticWaterTank.executeUpdate() != 1) {
         			throw new SQLException("[DatabaseManager] Problem during insertion in " + osmoticWaterTankDatabaseTableName + "!\n");
+        		}else {
+        			
+        			//Record inserted correctly
+        			return true;
+        		}
+        	}else if(table.equals(co2DispenserDatabaseTableName) ) {
+        		
+        		//Use the prepared statement of the temperature
+        		preparedStatementCO2Dispenser.setFloat(1, level);
+        		preparedStatementCO2Dispenser.setFloat(2, value);
+        		
+        		//If something bad happens throw an exception, the program must continue
+        		if(preparedStatementCO2Dispenser.executeUpdate() != 1) {
+        			throw new SQLException("[DatabaseManager] Problem during insertion in " + co2DispenserDatabaseTableName + "!\n");
         		}else {
         			
         			//Record inserted correctly

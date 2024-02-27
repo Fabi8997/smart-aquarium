@@ -5,9 +5,9 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
 /**
- * @author Fabi8997
  * Class that represent a temperature sample, this sample is sensed by the temperature sensor and sent through a MQTT message to the broker.
  * This class allows to parse the JSON string sent by the sensor and offers the methods to insert the sample inside the DB.
+ * @author Fabi8997
  */
 
 public class TemperatureSample {

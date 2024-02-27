@@ -14,6 +14,7 @@
         <xs:element type="xs:string" name="kHDatabaseTableName"/>
         <xs:element type="xs:string" name="temperatureDatabaseTableName"/>
         <xs:element type="xs:string" name="osmoticWaterTankDatabaseTableName"/>
+        <xs:element type="xs:string" name="co2DispenserDatabaseTableName"/>
         <xs:element type="xs:string" name="MQTTBroker"/>
         <xs:element type="xs:string" name="MQTTClientId"/>
         <xs:element type="xs:string" name="pHTopic"/>

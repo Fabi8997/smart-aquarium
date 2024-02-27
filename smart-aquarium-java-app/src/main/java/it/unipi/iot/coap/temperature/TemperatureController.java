@@ -7,18 +7,36 @@ import org.eclipse.californium.core.coap.MediaTypeRegistry;
 
 import it.unipi.iot.configuration.ConfigurationParameters;
 
+/**
+ * 
+ * This class handles two CoapClients to interact with the assigned URIs. <br> It provides the methods to: <br>
+ * - activate the fan <br>
+ * - stop the fan <br>
+ * - activate the heater <br>
+ * - stop the heater <br>
+ * 
+ * @author Fabi8997
+ * 
+ */
 public class TemperatureController {
 	
+	//Status
 	private boolean fanActive;
 	private boolean heaterActive;
+	
+	//CoAP Clients
 	private CoapClient fanClient;
 	private CoapClient heaterClient;
 	
+	/**
+	 * Class constructor. It creates two CoapClient to interact with the fan resource and the heater resource.
+	 * 
+	 * @param ipAddress of the URI
+	 * @param configurationParameters configuration parameters
+	 */
 	public TemperatureController(String ipAddress, ConfigurationParameters configurationParameters) {
 			
-			//MAX_CAPACITY = configurationParameters.maxCapacityOsmoticWaterTank;
-			//current_level = MAX_CAPACITY;
-			
+			//Create two clients to interact with the specified URI
 			this.fanClient = new CoapClient("coap://[" + ipAddress + "]/temperature/fan");
 			this.heaterClient = new CoapClient("coap://[" + ipAddress + "]/temperature/heater");
 		
@@ -26,6 +44,9 @@ public class TemperatureController {
 			this.heaterActive = false;
 	}
 	
+	/**
+	 * Send a put request to activate the fan and set accordingly the flag in case of success.
+	 */
 	public void activateFan() {
 		
 		//send put mode on
@@ -54,6 +75,9 @@ public class TemperatureController {
         }, "mode=on", MediaTypeRegistry.TEXT_PLAIN);
 	}
 
+	/**
+	 * Send a put request to activate the heater and set accordingly the flag in case of success.
+	 */
 	public void activateHeater() {
 		
 		//send put mode on
@@ -82,7 +106,9 @@ public class TemperatureController {
         }, "mode=on", MediaTypeRegistry.TEXT_PLAIN);
 	}
 	
-	
+	/**
+	 * Send a put request to stop the fan and set accordingly the flag in case of success.
+	 */
 	public void stopFan() {
 		
 		//send put mode off
@@ -111,7 +137,10 @@ public class TemperatureController {
 		}, "mode=off", MediaTypeRegistry.TEXT_PLAIN);
 	}
 	
-public void stopHeater() {
+	/**
+	 * Send a put request to stop the heater and set accordingly the flag in case of success.
+	 */
+	public void stopHeater() {
 		
 		//send put mode off
 		heaterClient.put(new CoapHandler() {

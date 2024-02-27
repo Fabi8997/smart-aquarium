@@ -58,12 +58,24 @@ public class SmartAquariumApp {
 			}
 		}
 		
+		//Start the co2 flow with the basic amount of co2dispensed!
+		 * every time the co2 change then it must be sent the new level to be dispensed
+		
 		System.out.println("[SMART AQUARIUM] All the devices are registered to the CoAP Network Controller");
 		
 		//System.out.println("response: " + coapNetworkController.getOsmoticWaterTank().get().getResponseText());
 		*/
 		
-		//TODO 
+		while(!coapNetworkController.co2DispenserRegistered()) {
+			try {
+				Thread.sleep(2000);
+			} catch (InterruptedException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+		}
+		coapNetworkController.getCo2Dispenser().startDispenser();
+		//TODO only when all are registered!!
 		
 		while(true) {
 			try {
@@ -119,11 +131,6 @@ public class SmartAquariumApp {
 		
 		
 		/*
-		 * Fare il co2dispenser coap client
-		 * Aggiungere l'observer
-		 * Creare la tabella per la co2, livello della bombola e co2 erogata
-		 * 
-		 * Testare
 		 * 
 		 * ULTIMO STEP:
 		 * 
