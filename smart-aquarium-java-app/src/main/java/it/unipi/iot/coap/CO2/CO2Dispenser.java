@@ -23,8 +23,10 @@ public class CO2Dispenser extends CoapClient {
 	//Status
 	float co2DispenserTankLevel; 
 	boolean co2DispenserTankFlowActive;
-	private static float currentVariation;
-	private static float currentCO2;
+	private float currentVariation;
+	private float currentCO2;
+	
+	private static float THRESHOLD = (float) 0.5;
 	
 	/**
 	 * Class constructor.
@@ -38,8 +40,11 @@ public class CO2Dispenser extends CoapClient {
 			
 			this.co2DispenserTankFlowActive = false;
 			
-			//Initialize current variation
-			CO2Dispenser.currentVariation = 0;
+			//Initialize current variation, this is needed to know how much must be increase or decrease the PH value
+			this.currentVariation = 0;
+			
+			//Set to 0 so the new value is over the threshold always
+			this.currentCO2 = 0;
 			
 			//Set the initial level of CO2 to be dispensed based on the optimal values
 			computeNewCO2(configurationParameters.pHOptimalValue,
@@ -59,18 +64,19 @@ public class CO2Dispenser extends CoapClient {
 	 * @param kH value observed from the KH sensor
 	 * @param temperature observed from the temperature sensor
 	 */
-	public static void computeNewCO2(float pH, float kH, float temperature) {
+	public void computeNewCO2(float pH, float kH, float temperature) {
 		
 		float PKa = (float) (((3404.71)/(temperature + 273.15)) + (0.032786*(temperature + 273.15) - 14.8435));
 		float newCO2 = (float) (15.69692*kH*Math.pow(10, PKa - pH));
+		System.out.println(newCO2);
 		
 		currentVariation = Math.abs(newCO2 - currentCO2);
 		
-		/*if ((newCO2 - currentCO2) > 0.5){
+		if (currentVariation > THRESHOLD){
 			currentCO2 = newCO2;
-			send the new value to the dispenser
-			write it in the db
-		}*/
+			this.setCO2Dispensed();
+			
+		}
 		
 	}
 	

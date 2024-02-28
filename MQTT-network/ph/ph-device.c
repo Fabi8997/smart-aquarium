@@ -94,10 +94,8 @@ pub_handler(const char *topic, uint16_t topic_len, const uint8_t *chunk,
             uint16_t chunk_len)
 {
 
- 	LOG_INFO("Pub Handler: topic='%s' (len=%u), chunk_len=%u, %s \n", topic, topic_len, chunk_len, chunk);
   if(strcmp(topic, "co2Dispenser") == 0) {
     
-	LOG_INFO("Pub Handler: topic='%s' (len=%u), chunk_len=%u, %s \n", topic, topic_len, chunk_len, chunk);
 	
 	if(strcmp((const char*) chunk, "OFF") == 0) { //No change in CO2, random behavior
 		co2_erogation_variation = 0;

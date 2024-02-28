@@ -56,7 +56,7 @@ static void res_put_handler(coap_message_t *request, coap_message_t *response, u
   //If the request has the mode variable
   if((len = coap_get_post_variable(request, "mode", &mode))) {
 
-    LOG_INFO("mode %s\n", mode);
+    LOG_DBG("mode %s\n", mode);
 
     //If the mode is on
     if(strncmp(mode, "on", len) == 0) {
@@ -99,7 +99,7 @@ static void res_put_handler(coap_message_t *request, coap_message_t *response, u
   //If the request has the value variable
   if((len = coap_get_post_variable(request, "value", &value))) {
 
-    LOG_INFO("value %s\n", value);
+    LOG_INFO("New CO2 value: %s\n", value);
 
     //New quantity of CO2 to dispense
     float new_co2_value = atof(value);
@@ -127,7 +127,7 @@ static void res_event_handler(){
 		//Reduce the level of the CO2 tank by the value that is currently flowing
 		tank_level -= co2_value;
 
-		LOG_INFO("Level: %f\n", tank_level);
+		LOG_DBG("Level: %f\n", tank_level);
 
 		//If the level is too low stop the flow and signal that the tank must be changed
 		if ( tank_level <= minimum_tank_level){

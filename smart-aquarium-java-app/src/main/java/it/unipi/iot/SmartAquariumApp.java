@@ -14,8 +14,6 @@ import it.unipi.iot.coap.CoAPNetworkController;
  * TODO
  */
 public class SmartAquariumApp {
-
-	static boolean flow_active = false; //To be substituted by coapGETStatus
 	
 	public static void main(String[] args) throws MqttException {
 		System.out.println("[SMART AQUARIUM] Welcome to your Smart Aquarium!");
@@ -46,7 +44,7 @@ public class SmartAquariumApp {
 		System.out.println("[SMART AQUARIUM] Waiting for the registration of all the devices...");
 		
 		//Wait until all the devices are registered
-		/*while(!coapNetworkController.allDevicesRegistered()) {
+		while(!coapNetworkController.allDevicesRegistered()) {
 			try {
 				
 				//Sleep for 5 seconds to wait for registration
@@ -59,22 +57,16 @@ public class SmartAquariumApp {
 		}
 		
 		//Start the co2 flow with the basic amount of co2dispensed!
-		 * every time the co2 change then it must be sent the new level to be dispensed
+		//every time the co2 change then it must be sent the new level to be dispensed
 		
 		System.out.println("[SMART AQUARIUM] All the devices are registered to the CoAP Network Controller");
 		
 		//System.out.println("response: " + coapNetworkController.getOsmoticWaterTank().get().getResponseText());
-		*/
 		
-		while(!coapNetworkController.co2DispenserRegistered()) {
-			try {
-				Thread.sleep(2000);
-			} catch (InterruptedException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			}
+		if(coapNetworkController.co2DispenserRegistered()) {
+			coapNetworkController.getCo2Dispenser().startDispenser();
 		}
-		coapNetworkController.getCo2Dispenser().startDispenser();
+		
 		//TODO only when all are registered!!
 		
 		while(true) {
@@ -121,6 +113,15 @@ public class SmartAquariumApp {
 						configurationParameters.pHOptimalValue,
 						configurationParameters.epsilon);
 			}
+			
+			//TODO change the value IFF all the parameters are ok and inside their intervals! this must be used only when 
+			//The PH is not good
+			if((coapNetworkController != null) && (coapNetworkController.getCo2Dispenser() != null)) {
+				coapNetworkController.getCo2Dispenser().computeNewCO2(
+						mqttCollector.getCurrentPH(),
+						mqttCollector.getCurrentKH(),
+						mqttCollector.getCurrentTemperature());
+			}
 		}
 		
 		
@@ -130,7 +131,10 @@ public class SmartAquariumApp {
 		//CO2 computation at the end
 		
 		
-		/*
+		/* Calcolo CO2 solo se KH, temperatura e PH sono all'interno dell'intervall
+		 * Inoltre forzare il cambio del PH solamente quando temperatura a KH sono dentro l'intervallo giusto! 
+		 * Gestire le temporizzazioni
+		 * Le variazioni imposte devono essere maggiori di quelle randomiche, altrimenti non funzionerà mai
 		 * 
 		 * ULTIMO STEP:
 		 * 
