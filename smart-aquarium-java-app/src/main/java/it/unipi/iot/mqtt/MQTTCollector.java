@@ -203,6 +203,7 @@ public class MQTTCollector implements MqttCallback {
 	 */
 	public void simulateCo2Dispenser(String message) {
 		try {
+			
 			mqttClient.publish( this.co2DispenserTopic , new MqttMessage(message.getBytes()));
 		} catch (MqttPersistenceException e) {
 			// TODO Auto-generated catch block

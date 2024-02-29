@@ -15,13 +15,19 @@ import it.unipi.iot.coap.CoAPNetworkController;
  */
 public class SmartAquariumApp {
 	
+	//To retrieve the configuration parameters
+	private static ConfigurationParameters configurationParameters;
+	
+	//To keep track of the pH simulation status
+	private static String pHSimulationType = "OFF";
+	
 	public static void main(String[] args) throws MqttException {
 		System.out.println("[SMART AQUARIUM] Welcome to your Smart Aquarium!");
 		
 		//Load configuration parameters
 		System.out.println("[SMART AQUARIUM] Loading configuration parameters...");
 		ConfigurationXML configurationXML = new ConfigurationXML();
-		ConfigurationParameters configurationParameters = configurationXML.configurationParameters;
+		configurationParameters = configurationXML.configurationParameters;
 		
 		System.out.println(configurationParameters);
 		
@@ -41,39 +47,34 @@ public class SmartAquariumApp {
 		//Start the CoAP Server
 		coapNetworkController.start();
 		
-		System.out.println("[SMART AQUARIUM] Waiting for the registration of all the devices...");
+		System.out.println("\u001B[32m"+"[SMART AQUARIUM] Waiting for the registration of all the devices...");
 		
 		//Wait until all the devices are registered
 		while(!coapNetworkController.allDevicesRegistered()) {
 			try {
 				
 				//Sleep for 5 seconds to wait for registration
-				Thread.sleep(5000);
-			} catch (InterruptedException e) {
+				Thread.sleep(configurationParameters.sleepIntervalApp);
 				
-				// TODO Auto-generated catch block
+			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
 		}
 		
-		//Start the co2 flow with the basic amount of co2dispensed!
-		//every time the co2 change then it must be sent the new level to be dispensed
-		
 		System.out.println("[SMART AQUARIUM] All the devices are registered to the CoAP Network Controller");
 		
-		//System.out.println("response: " + coapNetworkController.getOsmoticWaterTank().get().getResponseText());
-		
+		//When all the devices are registered then the flow of CO2 starts
 		if(coapNetworkController.co2DispenserRegistered()) {
 			coapNetworkController.getCo2Dispenser().startDispenser();
 		}
 		
-		//TODO only when all are registered!!
-		
+		//Main cycle
 		while(true) {
+			
+			//Every sleepIntervalApp milliseconds the status of the values is checked
 			try {
-				Thread.sleep(5000);//ADD in configuration the 
+				Thread.sleep(configurationParameters.sleepIntervalApp);
 			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 			
@@ -101,7 +102,7 @@ public class SmartAquariumApp {
 			}
 			
 			
-			//If the pH sensor has published a new temperature value then check its value
+			//If the pH sensor has published a new pH value then check its value
 			//The control of the pH is more difficult, since we've to modify it only when the kH and the temperature  is stable
 			// only in this case we can modify the pH in order to not harm the fishes.
 			if((coapNetworkController != null) && (mqttCollector.isNewCurrentPH())) {
@@ -114,9 +115,8 @@ public class SmartAquariumApp {
 						configurationParameters.epsilon);
 			}
 			
-			//TODO change the value IFF all the parameters are ok and inside their intervals! this must be used only when 
-			//The PH is not good
-			if((coapNetworkController != null) && (coapNetworkController.getCo2Dispenser() != null)) {
+			//If all the values are good, then compute the new level of CO2 to be dispensed
+			if((coapNetworkController != null) && (coapNetworkController.getCo2Dispenser() != null) && (areAllMeasuresStable(mqttCollector))) {
 				coapNetworkController.getCo2Dispenser().computeNewCO2(
 						mqttCollector.getCurrentPH(),
 						mqttCollector.getCurrentKH(),
@@ -130,25 +130,29 @@ public class SmartAquariumApp {
 		
 		//CO2 computation at the end
 		
-		
-		/* Calcolo CO2 solo se KH, temperatura e PH sono all'interno dell'intervall
-		 * Inoltre forzare il cambio del PH solamente quando temperatura a KH sono dentro l'intervallo giusto! 
+		/*
 		 * Gestire le temporizzazioni
 		 * Le variazioni imposte devono essere maggiori di quelle randomiche, altrimenti non funzionerà mai
-		 * 
-		 * ULTIMO STEP:
-		 * 
-		 * Calcolo livello co2 si può fare come ultima cosa
-		 * Forse il check del ph è da modificare e la variazione va cambiata solo quando il livello di ph è troppo basso o alto
-		 * Quindi la CO2 è sempre attiva, in base alla variazione di CO2 il ph cambia, da poco a molto!!
-		 * Decidere gli istanti temporali, l'istante di pubblicazione deve essere lo stesso
-		 *
-		 * 
-		 * L'app ogni tot controlla i valori!!
+		 * Cambiare le variazioni di kh e temperatura e i valori iniziali nei dispositivi e anche nella configurazione!
+		 * Cambiare gli intervalli delle variazioni e vedere se il pH cambia in modo corretto
+		 * Gestire i colori in output, ricordarsi il reset!!
 		 */
 		
 	}
 	
+	/**
+	 * Checks if the kH value is under the lower bound, above the upper bound or around the optimal value. In the first two
+	 * cases activates the flow of osmotic water to bring the kH around the optimal value, while in the latter it turns off the 
+	 * osmotic water flow.<br>
+	 * To implement the simulation are sent MQTT messages to the sensors.
+	 * 
+	 * @param mqttCollector to retrieve the current values and interact with the sensors.
+	 * @param coapNetworkController to interact with the actuator.
+	 * @param lowerBound of kH interval.
+	 * @param upperBound of kH interval.
+	 * @param optimalValue of kH.
+	 * @param epsilon around the optimal value.
+	 */
 	private static void checkKHStatus(MQTTCollector mqttCollector, CoAPNetworkController coapNetworkController, float lowerBound, float upperBound, float optimalValue, float epsilon) {
 		
 		//If kH < LB
@@ -181,7 +185,19 @@ public class SmartAquariumApp {
 		}
 	}
 
-	
+
+	/**
+	 * Checks if the temperature is under the lower bound, above the upper bound or around the optimal value. In the first case
+	 * turn on the heater, in the second turn on the fan and in the latter case turn off the fan or the heater.<br>
+	 * To implement the simulation are sent MQTT messages to the sensors.
+	 * 
+	 * @param mqttCollector to retrieve the current values and interact with the sensors.
+	 * @param coapNetworkController to interact with the actuator.
+	 * @param lowerBound of temperature interval.
+	 * @param upperBound of temperature interval.
+	 * @param optimalValue of temperature.
+	 * @param epsilon around the optimal value.
+	 */
 	private static void checkTemperatureStatus(MQTTCollector mqttCollector, CoAPNetworkController coapNetworkController, float lowerBound, float upperBound, float optimalValue, float epsilon) {
 		
 	
@@ -228,45 +244,121 @@ public class SmartAquariumApp {
 		}
 	}
 
-	//TODO CALCOLARE LA CO2 DA EROGARE, SE IL VALORE ATTUALE MENO QUELLO PRECEDENTE È MAGGIORE DI UNA CERTA SOGLIA
-	//		IL DEC/INC È MAGGIORE NELLA SIMULAZIONE DEL PH!!!
+	/**
+	 * Checks the pH status: if it is under the lower bound or above the upper bound and the kH and the temperature are 
+	 * close to their optimal value, then the pH can be modified and the simulation of the pH sensor can be started accordingly
+	 * to the strength of the variation of the new CO2 level computed (It is computed only if the the kH and temperature are stable). <br>
+	 * If the pH value is now inside the desired interval then the simulation is stopped.<br>
+	 * The simulation is performed using MQTT messages.
+	 * 
+	 * @param mqttCollector to retrieve the current values and interact with the sensors.
+	 * @param coapNetworkController to interact with the actuator.
+	 * @param lowerBound of pH interval.
+	 * @param upperBound of pH interval.
+	 * @param optimalValue of pH.
+	 * @param epsilon around the optimal value.
+	 */
 	private static void checkPHStatus(MQTTCollector mqttCollector, CoAPNetworkController coapNetworkController, float lowerBound, float upperBound, float optimalValue, float epsilon) {
 		
-		//If kH < LB ADD && !coapNetworkController.getOsmoticWaterTank().isOsmoticWaterTankFlowActive()
-		if(((mqttCollector.getCurrentPH()) < lowerBound) ) {
-			
-			//Compute the CO2 to be released
-			//If the difference in CO2 level to be dispensed is significant then change the pH
-			
+		//If kH < LB ADD; The pH can be modified only when the temperature and the kH is stable
+		if(((mqttCollector.getCurrentPH()) < lowerBound) && tempAndKHStable(mqttCollector)) {
+				
+			//Compute the new value of CO2 to be dispensed
+			coapNetworkController.getCo2Dispenser().computeNewCO2(
+					mqttCollector.getCurrentPH(),
+					mqttCollector.getCurrentKH(),
+					mqttCollector.getCurrentTemperature());	
+				
 			//Activate the simulation on pH device
-			mqttCollector.simulateCo2Dispenser("SDEC");
+			if(!coapNetworkController.getCo2Dispenser().isHighVariation() && !pHSimulationType.equals("SDEC")) {
+	
+				//If the variation in CO2 is low => low variation of PH
+				mqttCollector.simulateCo2Dispenser("SDEC");
+					
+			}else if(coapNetworkController.getCo2Dispenser().isHighVariation() && !pHSimulationType.equals("DEC")){
+					
+				//If the variation in CO2 is high => high variation of PH
+				mqttCollector.simulateCo2Dispenser("DEC");
+			}	
 			
-			//Send the command to the actuator to start the flow: mode=on
-			//coapNetworkController.getOsmoticWaterTank().activateFlow();
 			
-		//If kH > UB ADD && !coapNetworkController.getOsmoticWaterTank().isOsmoticWaterTankFlowActive()
-		}else if ((mqttCollector.getCurrentPH() > upperBound ) ) {
+		//If kH > UB ADD; The pH can be modified only when the temperature and the kH is stable
+		}else if ((mqttCollector.getCurrentPH() > upperBound ) && tempAndKHStable(mqttCollector) ) {
 			
+			//Compute the new value of CO2 to be dispensed
+			coapNetworkController.getCo2Dispenser().computeNewCO2(
+					mqttCollector.getCurrentPH(),
+					mqttCollector.getCurrentKH(),
+					mqttCollector.getCurrentTemperature());	
+				
 			//Activate the simulation on pH device
-			mqttCollector.simulateCo2Dispenser("SINC");
+			if(!coapNetworkController.getCo2Dispenser().isHighVariation() && !pHSimulationType.equals("SINC")) {
+	
+				//If the variation in CO2 is low => low variation of PH
+				mqttCollector.simulateCo2Dispenser("SINC");
+					
+			}else if(coapNetworkController.getCo2Dispenser().isHighVariation() && !pHSimulationType.equals("INC")){
+					
+				//If the variation in CO2 is high => high variation of PH
+				mqttCollector.simulateCo2Dispenser("INC");
+			}				
 			
-			//Compute the CO2 to be released
-			
-			//Send the command to the actuator to start the flow: mode=on
-			//coapNetworkController.getOsmoticWaterTank().activateFlow();
-			
-			
-		//If    kH in [ OptKH - epsilon, OptKH + epsilon] where optKH is the optimum value for kH && coapNetworkController.getOsmoticWaterTank().isOsmoticWaterTankFlowActive()
-		}else if ((mqttCollector.getCurrentPH() > optimalValue - epsilon) && (mqttCollector.getCurrentPH() < (optimalValue + epsilon)) ) {
+		//If pH in [ OptPH - epsilon, OptPH + epsilon] where optPH is the optimum value for kH
+		}else if ((mqttCollector.getCurrentPH() > optimalValue - epsilon) && (mqttCollector.getCurrentPH() < (optimalValue + epsilon)) && !pHSimulationType.equals("OFF")) {
 			
 			//Activate the simulation on kH device
 			mqttCollector.simulateCo2Dispenser("OFF");
 			
-			//Compute the CO2 to be released
-			
-			//Send the command to the actuator to stop the flow: mode=off
-			//coapNetworkController.getOsmoticWaterTank().stopFlow();
+			//The flow of CO2 is always active!
 		}
+	}
+	
+	/**
+	 * Checks if all the measures are inside the required interval.
+	 * @param mqttCollector
+	 * @return true if all the measures are inside the required interval, false otherwise.
+	 */
+	private static boolean areAllMeasuresStable(MQTTCollector mqttCollector) {
+		
+		//Check if the kH belongs to (LB, UB)
+		if(mqttCollector.getCurrentKH() < configurationParameters.kHLowerBound || mqttCollector.getCurrentKH() > configurationParameters.kHUpperBound) {
+			return false;
+		}
+		
+		//Check if the pH belongs to (LB, UB)
+		if(mqttCollector.getCurrentPH() < configurationParameters.pHLowerBound || mqttCollector.getCurrentPH() > configurationParameters.pHUpperBound) {
+			return false;
+		}
+		
+		//Check if the temperature belongs to (LB, UB)
+		if(mqttCollector.getCurrentTemperature() < configurationParameters.temperatureLowerBound || mqttCollector.getCurrentTemperature() > configurationParameters.temperatureUpperBound) {
+			return false;
+		}
+		
+		//All values are stable
+		return true;
+	}
+	
+	
+	/**
+	 * Checks if the temperature and the kH are inside the desired interval.
+	 * @param mqttCollector to retrieve the values.
+	 * @return true if the temperature and the kH are inside the desired interval, false otherwise.
+	 */
+	private static boolean tempAndKHStable(MQTTCollector mqttCollector) {
+		
+		//Check if the kH belongs to (LB, UB)
+		if(mqttCollector.getCurrentKH() < configurationParameters.kHLowerBound || mqttCollector.getCurrentKH() > configurationParameters.kHUpperBound) {
+			return false;
+		}
+		
+		//Check if the temperature belongs to (LB, UB)
+		if(mqttCollector.getCurrentTemperature() < configurationParameters.temperatureLowerBound || mqttCollector.getCurrentTemperature() > configurationParameters.temperatureUpperBound) {
+			return false;
+		}
+		
+		//All values are stable
+		return true;
 	}
 	
 }

@@ -19,8 +19,8 @@ static void res_get_handler(coap_message_t *request, coap_message_t *response, u
 static void res_event_handler();
 
 bool flow = false;
-float tank_level = 2400.0;
-static float minimum_tank_level = 2000.0;
+float tank_level = 5000.0;
+static float minimum_tank_level = 1000.0;
 bool to_be_filled = false;
 float co2_value = 0;
 

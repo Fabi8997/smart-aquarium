@@ -35,6 +35,7 @@
         <xs:element type="xs:float" name="pHOptimalValue"/>
         <xs:element type="xs:float" name="epsilon"/>
         <xs:element type="xs:float" name="epsilonTemperature"/>
+        <xs:element type="xs:integer" name="sleepIntervalApp"/>
       </xs:sequence>
     </xs:complexType>
   </xs:element>

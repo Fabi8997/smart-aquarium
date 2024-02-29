@@ -26,7 +26,10 @@ public class CO2Dispenser extends CoapClient {
 	private float currentVariation;
 	private float currentCO2;
 	
+	//TODO Define the threshold
 	private static float THRESHOLD = (float) 0.5;
+	
+	private static float HIGH_VARIATION_THRESHOLD = 5;
 	
 	/**
 	 * Class constructor.
@@ -194,6 +197,10 @@ public class CO2Dispenser extends CoapClient {
 			
 
         }, "mode=off", MediaTypeRegistry.TEXT_PLAIN);
+	}
+	
+	public boolean isHighVariation() {
+		return currentVariation > HIGH_VARIATION_THRESHOLD;
 	}
 	
 	public float getCurrentCO2() {

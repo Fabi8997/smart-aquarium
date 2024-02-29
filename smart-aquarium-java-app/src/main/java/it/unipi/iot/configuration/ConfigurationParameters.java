@@ -37,6 +37,8 @@ public class ConfigurationParameters {
 	public float pHOptimalValue;
 	public float epsilon;
 	public float epsilonTemperature;
+	public int sleepIntervalApp;
+	
 	@Override
 	public String toString() {
 		return "ConfigurationParameters [databaseIP=" + databaseIP + ",\n databasePort=" + databasePort
@@ -53,7 +55,8 @@ public class ConfigurationParameters {
 				+ kHOptimalValue + ",\n temperatureLowerBound=" + temperatureLowerBound + ",\n temperatureUpperBound="
 				+ temperatureUpperBound + ",\n temperatureOptimalValue=" + temperatureOptimalValue
 				+ ",\n pHLowerBound=" + pHLowerBound + ",\n pHUpperBound=" + pHUpperBound + ",\n pHOptimalValue="
-				+ pHOptimalValue + ",\n epsilon=" + epsilon + ",\n epsilonTemperature=" + epsilonTemperature + "]";
+				+ pHOptimalValue + ",\n epsilon=" + epsilon + ",\n epsilonTemperature=" + epsilonTemperature 
+				+ ",\n sleepIntervalApp=" + sleepIntervalApp +"]";
 	}
 	
 

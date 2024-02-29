@@ -19,15 +19,16 @@
 	<fanTopic>fan</fanTopic>
 	<heaterTopic>heater</heaterTopic>
 	<co2DispenserTopic>co2Dispenser</co2DispenserTopic>
-	<kHLowerBound>4</kHLowerBound>
-	<kHUpperBound>6</kHUpperBound>
+	<kHLowerBound>4.5</kHLowerBound>
+	<kHUpperBound>5.5</kHUpperBound>
 	<kHOptimalValue>5</kHOptimalValue>
-	<temperatureLowerBound>23</temperatureLowerBound>
-	<temperatureUpperBound>27</temperatureUpperBound>
+	<temperatureLowerBound>24</temperatureLowerBound>
+	<temperatureUpperBound>26</temperatureUpperBound>
 	<temperatureOptimalValue>25</temperatureOptimalValue>
-	<pHLowerBound>6</pHLowerBound>
-	<pHUpperBound>8</pHUpperBound>
-	<pHOptimalValue>7</pHOptimalValue>
-	<epsilon>0.2</epsilon>
+	<pHLowerBound>6.5</pHLowerBound>
+	<pHUpperBound>7</pHUpperBound>
+	<pHOptimalValue>6.75</pHOptimalValue>
+	<epsilon>0.1</epsilon>
 	<epsilonTemperature>0.5</epsilonTemperature>
+	<sleepIntervalApp>5000</sleepIntervalApp>
 </it.unipi.iot.configuration.ConfigurationParameters>

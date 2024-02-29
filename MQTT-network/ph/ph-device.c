@@ -189,7 +189,7 @@ static float pH_value = 6.0;
 
 /*Values used respectively to define the upper bound of the possible variation interval and for the standard pH
   variation in case of stabilization using CO2*/
-static float max_pH_variation = 0.2;
+static float max_pH_variation = 0.1;
 static float pH_variation_co2 = 0.05;
 static float soft_pH_variation_co2 = 0.02;
 
