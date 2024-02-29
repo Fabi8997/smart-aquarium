@@ -20,6 +20,10 @@ import it.unipi.iot.configuration.ConfigurationParameters;
  */
 public class CO2Dispenser extends CoapClient {
 	
+	private static final String ANSI_RESET = "\u001B[0m";
+	private static final String ANSI_GREEN = "\u001B[32m";
+	private static final String LOG = "[" + ANSI_GREEN + "CoAP Controller" + ANSI_RESET + "]";
+	
 	//Status
 	float co2DispenserTankLevel; 
 	boolean co2DispenserTankFlowActive;
@@ -109,10 +113,10 @@ public class CO2Dispenser extends CoapClient {
                 if (response != null) {
                     if(!response.isSuccess()) {
                     	
-                        System.out.println("[CoAP Network Controller] Put operation failed [device: CO2Dispenser].");
+                        System.out.println(LOG + " Put operation failed [device: CO2Dispenser].");
                     }else {
                     	
-                    	System.out.println("[CoAP Network Controller] CO2 dispenser tank --> mode = on.");
+                    	System.out.println(LOG + " CO2 dispenser tank --> mode = on.");
                     	
                     	//Set the flag to signal that the flow is active
                 		co2DispenserTankFlowActive = true;
@@ -121,7 +125,7 @@ public class CO2Dispenser extends CoapClient {
             }
 
             public void onError() {
-                System.err.println("[CoAP Network Controller] Put operation failed [device: CO2Dispenser].");
+                System.err.println(LOG + " Put operation failed [device: CO2Dispenser].");
             }
 
 			
@@ -145,16 +149,16 @@ public class CO2Dispenser extends CoapClient {
                 if (response != null) {
                     if(!response.isSuccess()) {
                     	
-                        System.out.println("[CoAP Network Controller] Put operation failed [device: CO2Dispenser].");
+                        System.out.println(LOG + " Put operation failed [device: CO2Dispenser].");
                     }else {
                     	
-                    	System.out.println("[CoAP Network Controller] CO2 dispenser tank --> value = "+currentCO2+".");
+                    	System.out.println(LOG + " CO2 dispenser tank --> value = "+currentCO2+".");
                     }
                 }
             }
 
             public void onError() {
-                System.err.println("[CoAP Network Controller] Put operation failed [device: CO2Dispenser].");
+                System.err.println(LOG + " Put operation failed [device: CO2Dispenser].");
             }
 
 			
@@ -179,10 +183,10 @@ public class CO2Dispenser extends CoapClient {
                 if (response != null) {
                     if(!response.isSuccess()) {
                     	
-                        System.out.println("[CoAP Network Controller] Put operation failed [device: CO2Dispenser].");
+                        System.out.println(LOG + " Put operation failed [device: CO2Dispenser].");
                     }else {
                     	
-                    	System.out.println("[CoAP Network Controller] CO2 dispenser tank --> mode = off.");
+                    	System.out.println(LOG + " CO2 dispenser tank --> mode = off.");
                     	
                     	//Set the flag to signal that the flow is active
                 		co2DispenserTankFlowActive = true;
@@ -191,7 +195,7 @@ public class CO2Dispenser extends CoapClient {
             }
 
             public void onError() {
-                System.err.println("[CoAP Network Controller] Put operation failed [device: CO2Dispenser].");
+                System.err.println(LOG + " Put operation failed [device: CO2Dispenser].");
             }
 
 			

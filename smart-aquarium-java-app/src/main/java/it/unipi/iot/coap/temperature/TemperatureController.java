@@ -20,6 +20,10 @@ import it.unipi.iot.configuration.ConfigurationParameters;
  */
 public class TemperatureController {
 	
+	private static final String ANSI_RESET = "\u001B[0m";
+	private static final String ANSI_GREEN = "\u001B[32m";
+	private static final String LOG = "[" + ANSI_GREEN + "CoAP Controller" + ANSI_RESET + "]";
+	
 	//Status
 	private boolean fanActive;
 	private boolean heaterActive;
@@ -57,10 +61,10 @@ public class TemperatureController {
                 if (response != null) {
                     if(!response.isSuccess()) {
                     	
-                        System.out.println("[CoAP Network Controller] Put operation failed [device: temperatureController].");
+                        System.out.println(LOG + " Put operation failed [device: temperatureController].");
                     }else {
                     	
-                    	System.out.println("[CoAP Network Controller] Fan mode = on.");
+                    	System.out.println(LOG + " Fan mode = on.");
                     	
                     	//Set the flag to signal that the flow is active
                 		fanActive = true;
@@ -69,7 +73,7 @@ public class TemperatureController {
             }
 
             public void onError() {
-                System.err.println("[CoAP Network Controller] Put operation failed [device: temperatureController].");
+                System.err.println(LOG + " Put operation failed [device: temperatureController].");
             }
 
         }, "mode=on", MediaTypeRegistry.TEXT_PLAIN);
@@ -88,10 +92,10 @@ public class TemperatureController {
                 if (response != null) {
                     if(!response.isSuccess()) {
                     	
-                        System.out.println("[CoAP Network Controller] Put operation failed [device: temperatureController].");
+                        System.out.println(LOG + " Put operation failed [device: temperatureController].");
                     }else {
                     	
-                    	System.out.println("[CoAP Network Controller] Heater mode = on.");
+                    	System.out.println(LOG + " Heater mode = on.");
                     	
                     	//Set the flag to signal that the flow is active
                 		heaterActive = true;
@@ -100,7 +104,7 @@ public class TemperatureController {
             }
 
             public void onError() {
-                System.err.println("[CoAP Network Controller] Put operation failed [device: temperatureController].");
+                System.err.println(LOG + " Put operation failed [device: temperatureController].");
             }
 
         }, "mode=on", MediaTypeRegistry.TEXT_PLAIN);
@@ -119,10 +123,10 @@ public class TemperatureController {
 					if (response != null) {
 						if(!response.isSuccess()) {
 		                    	
-							System.out.println("[CoAP Network Controller] Put operation failed [device: temperatureController].");
+							System.out.println(LOG + " Put operation failed [device: temperatureController].");
 		                }else {
 		                    	
-		                	System.out.println("[CoAP Network Controller] Fan mode = off.");
+		                	System.out.println(LOG + " Fan mode = off.");
 		                    	
 		                    //Set the flag to signal that the fan is stopped
 		                	fanActive = false;
@@ -131,7 +135,7 @@ public class TemperatureController {
 		        }
 	
 		        public void onError() {
-		                System.err.println("[CoAP Network Controller] Put operation failed [device: temperatureController].");
+		                System.err.println(LOG + " Put operation failed [device: temperatureController].");
 		        }
 
 		}, "mode=off", MediaTypeRegistry.TEXT_PLAIN);
@@ -150,10 +154,10 @@ public class TemperatureController {
 					if (response != null) {
 						if(!response.isSuccess()) {
 		                    	
-							System.out.println("[CoAP Network Controller] Put operation failed [device: temperatureController].");
+							System.out.println(LOG + " Put operation failed [device: temperatureController].");
 		                }else {
 		                    	
-		                	System.out.println("[CoAP Network Controller] Heater mode = off.");
+		                	System.out.println(LOG + " Heater mode = off.");
 		                    	
 		                    //Set the flag to signal that the heater is stopped
 		                	heaterActive = false;
@@ -162,7 +166,7 @@ public class TemperatureController {
 		        }
 	
 		        public void onError() {
-		                System.err.println("[CoAP Network Controller] Put operation failed [device: temperatureController].");
+		                System.err.println(LOG + " Put operation failed [device: temperatureController].");
 		        }
 
 		}, "mode=off", MediaTypeRegistry.TEXT_PLAIN);

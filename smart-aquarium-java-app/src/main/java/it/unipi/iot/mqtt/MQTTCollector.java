@@ -24,6 +24,10 @@ import it.unipi.iot.temperature.TemperatureSample;
  */
 public class MQTTCollector implements MqttCallback {
 	
+	private static final String ANSI_RESET = "\u001B[0m";
+	private static final String ANSI_GREEN = "\u001B[32m";
+	private static final String LOG = "[" + ANSI_GREEN + "MQTT Collector" + ANSI_RESET + " ]";
+	
 	//Topic to retrieve the data published by the sensors
 	private final String pHTopic;
 	private final String kHTopic;
@@ -102,7 +106,7 @@ public class MQTTCollector implements MqttCallback {
         
         //Connect the mqttClient to the broker
 		this.mqttClient = new MqttClient(broker, clientId);
-        System.out.println("[MQTTManager] Connecting to broker: "+broker);
+        System.out.println(LOG + " Connecting to broker: "+broker);
         
         this.mqttClient.setCallback( this );
         
@@ -241,7 +245,7 @@ public class MQTTCollector implements MqttCallback {
 			this.newCurrentPH = true;
 			
 			//LOG
-			System.out.println("[MQTTCollector] Inserted " + pHSample + " in " + this.pHDatabaseTableName + "." );
+			System.out.println(LOG + " Inserted " + pHSample + " in " + this.pHDatabaseTableName + "." );
 		
 		}else if(topic.equals(kHTopic)) {
 			
@@ -259,7 +263,7 @@ public class MQTTCollector implements MqttCallback {
 			this.newCurrentKH = true;
 			
 			//LOG
-			System.out.println("[MQTTCollector] Inserted " + kHSample + " in " + this.kHDatabaseTableName + "." );
+			System.out.println(LOG + " Inserted " + kHSample + " in " + this.kHDatabaseTableName + "." );
 			
 			
 		}else if(topic.equals(temperatureTopic)) {
@@ -278,10 +282,10 @@ public class MQTTCollector implements MqttCallback {
 			this.newCurrentTemperature = true;
 			
 			//LOG
-			System.out.println("[MQTTCollector] Inserted " + temperatureSample + " in " + this.temperatureDatabaseTableName + "." );
+			System.out.println(LOG + " Inserted " + temperatureSample + " in " + this.temperatureDatabaseTableName + "." );
 		}else {
 			//LOG
-			System.out.println("[MQTTCollector] " + String.format("[%s] %s", topic,new String(message.getPayload()) ));
+			System.out.println(LOG + " " + String.format("[%s] %s", topic,new String(message.getPayload()) ));
 
 		}
 	}

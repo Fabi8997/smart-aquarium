@@ -31,6 +31,10 @@ import it.unipi.iot.database.DatabaseManager;
  */
 public class CoAPNetworkController extends CoapServer {
 	
+	private static final String ANSI_RESET = "\u001B[0m";
+	private static final String ANSI_GREEN = "\u001B[32m";
+	private static final String LOG = "[" + ANSI_GREEN + "CoAP Controller" + ANSI_RESET + "]";
+	
 	//CoAP Clients
 	OsmoticWaterTank osmoticWaterTank;
 	CoapObserveRelation observeTankRelation;
@@ -140,7 +144,7 @@ public class CoAPNetworkController extends CoapServer {
 	 	 */
 		public void handlePOST(CoapExchange exchange) {
 			//Debug
-			//System.out.println("[CoAP Network Controller] new message received: " + exchange.getRequestText());
+			//System.out.println(LOG + " new message received: " + exchange.getRequestText());
 			
 			//Retrieve the ipAddress of the sender
 			String ipAddress = exchange.getSourceAddress().getHostAddress();
@@ -218,7 +222,7 @@ public class CoAPNetworkController extends CoapServer {
 									    db.insertSample(osmoticWaterTankDatabaseTableName, osmoticWaterTank.getOsmoticWaterTankLevel(), null);
 									    
 									    //LOG
-									    System.out.println("[CoAP Network Controller] Inserted " + requestTextJSON.toJSONString() + " in " + osmoticWaterTankDatabaseTableName + "." );
+									    System.out.println(LOG + " Inserted " + requestTextJSON.toJSONString() + " in " + osmoticWaterTankDatabaseTableName + "." );
 									}
 								}
 								@Override public void onError() {
@@ -227,13 +231,13 @@ public class CoAPNetworkController extends CoapServer {
 							});
 
 					
-					System.out.println("[CoAP Network Controller] new " + device + " registered!");
+					System.out.println(LOG + " new " + device + " registered!");
 					
 					//Set the response code and the payload message
 					exchange.respond(ResponseCode.CREATED, "registered");
 				}else {
 					
-					System.out.println("[CoAP Network Controller] " + device + " already registered!");
+					System.out.println(LOG + " " + device + " already registered!");
 					
 					//Device already registered
 					exchange.respond(ResponseCode.BAD_REQUEST);
@@ -293,10 +297,10 @@ public class CoAPNetworkController extends CoapServer {
 									    				co2Dispenser.getCo2DispenserTankLevel());
 									    
 									    //LOG
-									    System.out.println("[CoAP Network Controller] Inserted ( " +
-									    				"Level: " + co2Dispenser.getCo2DispenserTankLevel() + " " +
-									    				"Value: " + co2Dispenser.getCurrentCO2() + 
-									    				" ) in " + co2DispenserDatabaseTableName + "." );
+									    System.out.println(LOG + " Inserted {" +
+									    				"\"Level\": " + co2Dispenser.getCo2DispenserTankLevel() + "," +
+									    				"\"Value\": " + co2Dispenser.getCurrentCO2() + 
+									    				"} in " + co2DispenserDatabaseTableName + "." );
 									}
 								}
 								@Override public void onError() {
@@ -304,13 +308,13 @@ public class CoAPNetworkController extends CoapServer {
 								}
 							});
 				
-					System.out.println("[CoAP Network Controller] new " + device + " registered!");
+					System.out.println(LOG + " new " + device + " registered!");
 					
 					//Set the response code and the payload message
 					exchange.respond(ResponseCode.CREATED, "registered");
 				}else {
 					
-					System.out.println("[CoAP Network Controller] " + device + " already registered!");
+					System.out.println(LOG + " " + device + " already registered!");
 					
 					//Device already registered
 					exchange.respond(ResponseCode.BAD_REQUEST);
@@ -325,13 +329,13 @@ public class CoAPNetworkController extends CoapServer {
 					//Create a new CoAP Client
 					temperatureController = new TemperatureController(ipAddress,configurationParameters);
 					
-					System.out.println("[CoAP Network Controller] new " + device + " registered!");
+					System.out.println(LOG + " new " + device + " registered!");
 					
 					//Set the response code and the payload message
 					exchange.respond(ResponseCode.CREATED, "registered");
 				}else {
 					
-					System.out.println("[CoAP Network Controller] " + device + " already registered!");
+					System.out.println(LOG + " " + device + " already registered!");
 					
 					//Device already registered
 					exchange.respond(ResponseCode.BAD_REQUEST);

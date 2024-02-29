@@ -21,17 +21,24 @@ public class SmartAquariumApp {
 	//To keep track of the pH simulation status
 	private static String pHSimulationType = "OFF";
 	
+	private static final String ANSI_RESET = "\u001B[0m";
+	private static final String ANSI_GREEN = "\u001B[32m";
+	private static final String LOG = "[" + ANSI_GREEN + "Smart Aquarium" + ANSI_RESET + " ]";
+	
 	public static void main(String[] args) throws MqttException {
-		System.out.println("[SMART AQUARIUM] Welcome to your Smart Aquarium!");
+		
+		
+		System.out.println(LOG + " Welcome to your Smart Aquarium!");
 		
 		//Load configuration parameters
-		System.out.println("[SMART AQUARIUM] Loading configuration parameters...");
+		System.out.println(LOG+" Loading configuration parameters...");
+		
 		ConfigurationXML configurationXML = new ConfigurationXML();
 		configurationParameters = configurationXML.configurationParameters;
 		
 		System.out.println(configurationParameters);
 		
-		System.out.println("[SMART AQUARIUM] Connecting to the database...");
+		System.out.println(LOG+" Connecting to the database...");
 		
 		//Initialize database manager using the configuration parameters
 		DatabaseManager db = new DatabaseManager(configurationParameters);
@@ -39,7 +46,7 @@ public class SmartAquariumApp {
 		//Launch mqttCollector
 		MQTTCollector mqttCollector = new MQTTCollector(configurationParameters, db);
 		
-		System.out.println("\n[SMART AQUARIUM] Launching the CoAP Network Manager...\n");
+		System.out.println(LOG + " Launching the CoAP Network Manager...\n");
 		
 		//Create a new CoAP Server to handle the CoAP network
 		CoAPNetworkController coapNetworkController = new CoAPNetworkController(configurationParameters, db);
@@ -47,7 +54,7 @@ public class SmartAquariumApp {
 		//Start the CoAP Server
 		coapNetworkController.start();
 		
-		System.out.println("\u001B[32m"+"[SMART AQUARIUM] Waiting for the registration of all the devices...");
+		System.out.println(LOG + " Waiting for the registration of all the devices...");
 		
 		//Wait until all the devices are registered
 		while(!coapNetworkController.allDevicesRegistered()) {
@@ -61,7 +68,7 @@ public class SmartAquariumApp {
 			}
 		}
 		
-		System.out.println("[SMART AQUARIUM] All the devices are registered to the CoAP Network Controller");
+		System.out.println(LOG+" All the devices are registered to the CoAP Network Controller");
 		
 		//When all the devices are registered then the flow of CO2 starts
 		if(coapNetworkController.co2DispenserRegistered()) {
@@ -136,6 +143,7 @@ public class SmartAquariumApp {
 		 * Cambiare le variazioni di kh e temperatura e i valori iniziali nei dispositivi e anche nella configurazione!
 		 * Cambiare gli intervalli delle variazioni e vedere se il pH cambia in modo corretto
 		 * Gestire i colori in output, ricordarsi il reset!!
+		 * Spostare le cose di controllo da coap a smart app, cambiare il colore a mode = on e così via
 		 */
 		
 	}
