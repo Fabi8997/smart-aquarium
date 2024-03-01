@@ -21,9 +21,7 @@ import it.unipi.iot.log.Colors;
  */
 public class TemperatureController {
 	
-	private static final String ANSI_RESET = "\u001B[0m";
-	public static final String ANSI_CYAN = "\u001B[36m";
-	private static final String LOG = "[" + ANSI_CYAN + "Smart Aquarium " + ANSI_RESET + "]";
+	private static final String LOG = "[" + Colors.ANSI_CYAN + "Smart Aquarium " + Colors.ANSI_RESET + "]";
 	
 	//Status
 	private boolean fanActive;
