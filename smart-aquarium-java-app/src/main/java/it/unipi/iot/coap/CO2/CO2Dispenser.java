@@ -6,6 +6,7 @@ import org.eclipse.californium.core.CoapResponse;
 import org.eclipse.californium.core.coap.MediaTypeRegistry;
 
 import it.unipi.iot.configuration.ConfigurationParameters;
+import it.unipi.iot.log.Colors;
 
 
 /**
@@ -20,9 +21,7 @@ import it.unipi.iot.configuration.ConfigurationParameters;
  */
 public class CO2Dispenser extends CoapClient {
 	
-	private static final String ANSI_RESET = "\u001B[0m";
-	private static final String ANSI_GREEN = "\u001B[32m";
-	private static final String LOG = "[" + ANSI_GREEN + "CoAP Controller" + ANSI_RESET + "]";
+	private static final String LOG = "[" + Colors.ANSI_CYAN + "Smart Aquarium " + Colors.ANSI_RESET + "]";
 	
 	//Status
 	float co2DispenserTankLevel; 
@@ -31,7 +30,7 @@ public class CO2Dispenser extends CoapClient {
 	private float currentCO2;
 	
 	//TODO Define the threshold
-	private static float THRESHOLD = (float) 0.5;
+	private static float THRESHOLD = (float) 2;
 	
 	private static float HIGH_VARIATION_THRESHOLD = 5;
 	
@@ -75,7 +74,6 @@ public class CO2Dispenser extends CoapClient {
 		
 		float PKa = (float) (((3404.71)/(temperature + 273.15)) + (0.032786*(temperature + 273.15) - 14.8435));
 		float newCO2 = (float) (15.69692*kH*Math.pow(10, PKa - pH));
-		System.out.println(newCO2);
 		
 		currentVariation = Math.abs(newCO2 - currentCO2);
 		
@@ -116,7 +114,7 @@ public class CO2Dispenser extends CoapClient {
                         System.out.println(LOG + " Put operation failed [device: CO2Dispenser].");
                     }else {
                     	
-                    	System.out.println(LOG + " CO2 dispenser tank --> mode = on.");
+                    	System.out.println(LOG + " CO2 dispenser [ mode = "+Colors.ANSI_GREEN+"on"+Colors.ANSI_RESET+" ].");
                     	
                     	//Set the flag to signal that the flow is active
                 		co2DispenserTankFlowActive = true;
@@ -152,7 +150,7 @@ public class CO2Dispenser extends CoapClient {
                         System.out.println(LOG + " Put operation failed [device: CO2Dispenser].");
                     }else {
                     	
-                    	System.out.println(LOG + " CO2 dispenser tank --> value = "+currentCO2+".");
+                    	System.out.println(LOG + " Changed CO2 dispensed [ value = "+Colors.ANSI_GREEN+currentCO2+Colors.ANSI_RESET+" ].");
                     }
                 }
             }
@@ -186,10 +184,10 @@ public class CO2Dispenser extends CoapClient {
                         System.out.println(LOG + " Put operation failed [device: CO2Dispenser].");
                     }else {
                     	
-                    	System.out.println(LOG + " CO2 dispenser tank --> mode = off.");
+                    	System.out.println(LOG + " CO2 dispenser [ mode = "+Colors.ANSI_RED+"off"+Colors.ANSI_RESET+" ].");
                     	
                     	//Set the flag to signal that the flow is active
-                		co2DispenserTankFlowActive = true;
+                		co2DispenserTankFlowActive = false;
                     }
                 }
             }

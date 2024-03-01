@@ -5,13 +5,20 @@ import org.eclipse.paho.client.mqttv3.MqttException;
 import it.unipi.iot.configuration.ConfigurationParameters;
 import it.unipi.iot.configuration.ConfigurationXML;
 import it.unipi.iot.database.DatabaseManager;
+import it.unipi.iot.log.Colors;
 import it.unipi.iot.mqtt.MQTTCollector;
 import it.unipi.iot.coap.CoAPNetworkController;
 
 /**
+ * Main class of the smart aquarium application. It retrieves the configuration parameters from the configuration file, starts the
+ * database manager, the MQTT Collector and the CoAP Network Controller (that acts as a registration server to handle the devices
+ * on the CoAP network, provides different CoAP clients to interact with the actuators and finally it starts the observers for the 
+ * resources provided by the devices).<br>
+ * The main function of this class is to manage the different devices in order to provide a safe environment for the tank life.<br>
+ * It periodically checks the different values retrieved by the sensors and, when it's needed, it sends commands to the actuator 
+ * aimed at balancing the values in order to keep them inside the safe intervals.<br>
  * 
  * @author Fabi8997
- * TODO
  */
 public class SmartAquariumApp {
 	
@@ -21,9 +28,8 @@ public class SmartAquariumApp {
 	//To keep track of the pH simulation status
 	private static String pHSimulationType = "OFF";
 	
-	private static final String ANSI_RESET = "\u001B[0m";
-	private static final String ANSI_GREEN = "\u001B[32m";
-	private static final String LOG = "[" + ANSI_GREEN + "Smart Aquarium" + ANSI_RESET + " ]";
+	//To better visualize the terminal logs
+	private static final String LOG = "[" + Colors.ANSI_CYAN + "Smart Aquarium " + Colors.ANSI_RESET + "]";
 	
 	public static void main(String[] args) throws MqttException {
 		
@@ -46,7 +52,7 @@ public class SmartAquariumApp {
 		//Launch mqttCollector
 		MQTTCollector mqttCollector = new MQTTCollector(configurationParameters, db);
 		
-		System.out.println(LOG + " Launching the CoAP Network Manager...\n");
+		System.out.println(LOG + " Launching the CoAP Network Manager...");
 		
 		//Create a new CoAP Server to handle the CoAP network
 		CoAPNetworkController coapNetworkController = new CoAPNetworkController(configurationParameters, db);
@@ -131,19 +137,8 @@ public class SmartAquariumApp {
 			}
 		}
 		
-		
-		
-		
-		
-		//CO2 computation at the end
-		
 		/*
 		 * Gestire le temporizzazioni
-		 * Le variazioni imposte devono essere maggiori di quelle randomiche, altrimenti non funzionerà mai
-		 * Cambiare le variazioni di kh e temperatura e i valori iniziali nei dispositivi e anche nella configurazione!
-		 * Cambiare gli intervalli delle variazioni e vedere se il pH cambia in modo corretto
-		 * Gestire i colori in output, ricordarsi il reset!!
-		 * Spostare le cose di controllo da coap a smart app, cambiare il colore a mode = on e così via
 		 */
 		
 	}

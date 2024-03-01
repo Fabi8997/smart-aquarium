@@ -20,7 +20,7 @@ static void res_event_handler();
 
 bool flow = false;
 float tank_level = 5000.0;
-static float minimum_tank_level = 1000.0;
+static float minimum_tank_level = 500.0;
 bool to_be_filled = false;
 float co2_value = 0;
 

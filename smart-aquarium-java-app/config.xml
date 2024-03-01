@@ -28,7 +28,7 @@
 	<pHLowerBound>6.5</pHLowerBound>
 	<pHUpperBound>7</pHUpperBound>
 	<pHOptimalValue>6.75</pHOptimalValue>
-	<epsilon>0.1</epsilon>
+	<epsilon>0.12</epsilon>
 	<epsilonTemperature>0.5</epsilonTemperature>
 	<sleepIntervalApp>5000</sleepIntervalApp>
 </it.unipi.iot.configuration.ConfigurationParameters>

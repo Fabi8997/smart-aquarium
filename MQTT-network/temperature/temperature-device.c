@@ -207,7 +207,7 @@ have_connectivity(void)
 
 
 /*Initialized the value of the temperature to the value at the center of the interval*/
-static float temperature_value = 27.0;
+static float temperature_value = 25.0;
 
 /*Extreme of the safe interval for the temperature (to be used for leds)*/
 //static float min_temperature_value = 23.0;
@@ -216,7 +216,7 @@ static float temperature_value = 27.0;
 /*Values used respectively to define the upper bound of the possible variation interval and for the standard pH
   variation in case of stabilization using CO2*/
 static float max_temperature_variation = 0.2;
-static float temperature_variation_temperature_controller = 0.5;
+static float temperature_variation_temperature_controller = 0.4;
 
 /*
   NOTE: for simulation purposes this value is changed based on the value publiced in the topic related to the fan and the heater

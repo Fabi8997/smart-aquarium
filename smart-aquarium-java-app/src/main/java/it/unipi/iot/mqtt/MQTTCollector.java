@@ -10,6 +10,7 @@ import org.eclipse.paho.client.mqttv3.MqttPersistenceException;
 import it.unipi.iot.configuration.ConfigurationParameters;
 import it.unipi.iot.database.DatabaseManager;
 import it.unipi.iot.kh.KHSample;
+import it.unipi.iot.log.Colors;
 import it.unipi.iot.ph.PHSample;
 import it.unipi.iot.temperature.TemperatureSample;
 
@@ -24,9 +25,8 @@ import it.unipi.iot.temperature.TemperatureSample;
  */
 public class MQTTCollector implements MqttCallback {
 	
-	private static final String ANSI_RESET = "\u001B[0m";
-	private static final String ANSI_GREEN = "\u001B[32m";
-	private static final String LOG = "[" + ANSI_GREEN + "MQTT Collector" + ANSI_RESET + " ]";
+	
+	private static final String LOG = "[" + Colors.ANSI_YELLOW + "MQTT Collector" + Colors.ANSI_RESET + " ]";
 	
 	//Topic to retrieve the data published by the sensors
 	private final String pHTopic;

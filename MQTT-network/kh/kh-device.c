@@ -180,12 +180,12 @@ have_connectivity(void)
 
 
 /*Initialized the value of the kH to the value at the center of the interval*/
-static float kH_value = 4.2;
+static float kH_value = 5;
 
 /*Values used respectively to define the upper bound of the possible variation interval and for the standard pH
   variation in case of stabilization using CO2*/
-static float max_kH_variation = 0.2;
-static float kH_variation_osmotic_water = 0.05;
+static float max_kH_variation = 0.1;
+static float kH_variation_osmotic_water = 0.2;
 
 /*
   NOTE: for simulation purposes this value is changed based on the value publiced in the topic related to the OsmoticWaterTank

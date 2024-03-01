@@ -6,6 +6,7 @@ import org.eclipse.californium.core.CoapResponse;
 import org.eclipse.californium.core.coap.MediaTypeRegistry;
 
 import it.unipi.iot.configuration.ConfigurationParameters;
+import it.unipi.iot.log.Colors;
 
 /**
  * 
@@ -21,8 +22,8 @@ import it.unipi.iot.configuration.ConfigurationParameters;
 public class TemperatureController {
 	
 	private static final String ANSI_RESET = "\u001B[0m";
-	private static final String ANSI_GREEN = "\u001B[32m";
-	private static final String LOG = "[" + ANSI_GREEN + "CoAP Controller" + ANSI_RESET + "]";
+	public static final String ANSI_CYAN = "\u001B[36m";
+	private static final String LOG = "[" + ANSI_CYAN + "Smart Aquarium " + ANSI_RESET + "]";
 	
 	//Status
 	private boolean fanActive;
@@ -64,7 +65,7 @@ public class TemperatureController {
                         System.out.println(LOG + " Put operation failed [device: temperatureController].");
                     }else {
                     	
-                    	System.out.println(LOG + " Fan mode = on.");
+                    	System.out.println(LOG + " Fan [ mode = "+Colors.ANSI_GREEN+"on"+Colors.ANSI_RESET+" ].");
                     	
                     	//Set the flag to signal that the flow is active
                 		fanActive = true;
@@ -95,7 +96,7 @@ public class TemperatureController {
                         System.out.println(LOG + " Put operation failed [device: temperatureController].");
                     }else {
                     	
-                    	System.out.println(LOG + " Heater mode = on.");
+                    	System.out.println(LOG + " Heater [ mode = "+Colors.ANSI_GREEN+"on"+Colors.ANSI_RESET+" ].");
                     	
                     	//Set the flag to signal that the flow is active
                 		heaterActive = true;
@@ -126,7 +127,7 @@ public class TemperatureController {
 							System.out.println(LOG + " Put operation failed [device: temperatureController].");
 		                }else {
 		                    	
-		                	System.out.println(LOG + " Fan mode = off.");
+		                	System.out.println(LOG + " Fan [ mode = "+Colors.ANSI_RED+"off"+Colors.ANSI_RESET+" ].");
 		                    	
 		                    //Set the flag to signal that the fan is stopped
 		                	fanActive = false;
@@ -157,7 +158,7 @@ public class TemperatureController {
 							System.out.println(LOG + " Put operation failed [device: temperatureController].");
 		                }else {
 		                    	
-		                	System.out.println(LOG + " Heater mode = off.");
+		                	System.out.println(LOG + " Heater [ mode = "+Colors.ANSI_RED+"off"+Colors.ANSI_RESET+" ].");
 		                    	
 		                    //Set the flag to signal that the heater is stopped
 		                	heaterActive = false;

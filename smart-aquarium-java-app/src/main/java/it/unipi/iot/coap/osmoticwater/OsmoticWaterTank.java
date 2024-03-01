@@ -6,6 +6,7 @@ import org.eclipse.californium.core.CoapResponse;
 import org.eclipse.californium.core.coap.MediaTypeRegistry;
 
 import it.unipi.iot.configuration.ConfigurationParameters;
+import it.unipi.iot.log.Colors;
 
 /**
  * 
@@ -19,9 +20,7 @@ import it.unipi.iot.configuration.ConfigurationParameters;
  */
 public class OsmoticWaterTank extends CoapClient{
 	
-	private static final String ANSI_RESET = "\u001B[0m";
-	private static final String ANSI_GREEN = "\u001B[32m";
-	private static final String LOG = "[" + ANSI_GREEN + "CoAP Controller" + ANSI_RESET + "]";
+	private static final String LOG = "[" + Colors.ANSI_CYAN + "Smart Aquarium " + Colors.ANSI_RESET + "]";
 	
 	//Osmotic water tank status
 	float osmoticWaterTankLevel;
@@ -53,7 +52,7 @@ public class OsmoticWaterTank extends CoapClient{
                         System.out.println(LOG + " Put operation failed [device: OsmoticWaterTank].");
                     }else {
                     	
-                    	System.out.println(LOG + " Osmotic water tank --> mode = on.");
+                    	System.out.println(LOG + " Osmotic water tank [ mode = "+Colors.ANSI_GREEN+"on"+Colors.ANSI_RESET+" ].");
                     	
                     	//Set the flag to signal that the flow is active
                 		osmoticWaterTankFlowActive = true;
@@ -85,7 +84,7 @@ public class OsmoticWaterTank extends CoapClient{
 		                        System.out.println(LOG + " Put operation failed [device: OsmoticWaterTank].");
 		                    }else {
 		                    	
-		                    	System.out.println(LOG + " Osmotic water tank mode = off.");
+		                    	System.out.println(LOG + " Osmotic water tank [ mode = "+Colors.ANSI_RED+"off"+Colors.ANSI_RESET+" ].");
 		                    	
 		                    	//Set the flag to signal that the flow is stopped
 		                		osmoticWaterTankFlowActive = false;

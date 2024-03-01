@@ -18,6 +18,7 @@ import it.unipi.iot.coap.osmoticwater.OsmoticWaterTank;
 import it.unipi.iot.coap.temperature.TemperatureController;
 import it.unipi.iot.configuration.ConfigurationParameters;
 import it.unipi.iot.database.DatabaseManager;
+import it.unipi.iot.log.Colors;
 
 
 
@@ -31,9 +32,7 @@ import it.unipi.iot.database.DatabaseManager;
  */
 public class CoAPNetworkController extends CoapServer {
 	
-	private static final String ANSI_RESET = "\u001B[0m";
-	private static final String ANSI_GREEN = "\u001B[32m";
-	private static final String LOG = "[" + ANSI_GREEN + "CoAP Controller" + ANSI_RESET + "]";
+	private static final String LOG = "[" + Colors.ANSI_PURPLE + "CoAP Controller" + Colors.ANSI_RESET + "]";
 	
 	//CoAP Clients
 	OsmoticWaterTank osmoticWaterTank;

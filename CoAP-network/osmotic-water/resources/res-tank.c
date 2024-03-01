@@ -21,7 +21,7 @@ static void res_event_handler();
 
 static bool flow = false;
 float tank_level = 5000.0;
-static float minimum_tank_level = 2000.0;
+static float minimum_tank_level = 500.0;
 bool to_be_filled = false;
 
 
@@ -102,7 +102,7 @@ static void res_event_handler(){
 	if(flow == true){
 
 		//Reduce the tank level
-		tank_level -= 100.0;
+		tank_level -= 50.0;
 
 		LOG_INFO("Level: %f\n", tank_level);
 
