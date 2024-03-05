@@ -37,6 +37,9 @@ static bool connected = false;
 // To check if the device is registered to the coap reg server
 static bool registered = false;
 
+//To check if the application has sent a stop message
+bool to_stop = false;
+
 /* Declare and auto-start this file's process */
 PROCESS(co2_dispenser, "CO2 dispenser");
 AUTOSTART_PROCESSES(&co2_dispenser);
@@ -168,6 +171,11 @@ PROCESS_THREAD(co2_dispenser, ev, data)
   
   while(1){
 
+	//Check if it the application has sent a message to stop the device
+	if(to_stop){
+		break;
+	}
+
 	//Wait for the expiration of the timer OR a button event
 	PROCESS_WAIT_EVENT_UNTIL( ev == PROCESS_EVENT_TIMER || ev == button_hal_periodic_event );
 	
@@ -222,6 +230,6 @@ PROCESS_THREAD(co2_dispenser, ev, data)
  	}
   }
 
-
+  LOG_INFO("Device stopped correctly!\n");
   PROCESS_END();
 }

@@ -21,6 +21,7 @@ import it.unipi.iot.log.Colors;
 public class OsmoticWaterTank extends CoapClient{
 	
 	private static final String LOG = "[" + Colors.ANSI_CYAN + "Smart Aquarium " + Colors.ANSI_RESET + "]";
+	private static final String LOG_ERROR = "[" + Colors.ANSI_RED + "Smart Aquarium " + Colors.ANSI_RESET + " ]";
 	
 	//Osmotic water tank status
 	float osmoticWaterTankLevel;
@@ -61,7 +62,7 @@ public class OsmoticWaterTank extends CoapClient{
             }
 
             public void onError() {
-                System.err.println(LOG + " Put operation failed [device: OsmoticWaterTank].");
+                System.out.println(LOG_ERROR + " Put operation failed [device: OsmoticWaterTank].");
             }
 
 			
@@ -93,7 +94,7 @@ public class OsmoticWaterTank extends CoapClient{
 		            }
 
 		            public void onError() {
-		                System.err.println(LOG + " Put operation failed [device: OsmoticWaterTank].");
+		                System.out.println(LOG_ERROR + " Put operation failed [device: OsmoticWaterTank].");
 		            }
 
 					
@@ -117,5 +118,12 @@ public class OsmoticWaterTank extends CoapClient{
 		this.osmoticWaterTankFlowActive = osmoticWaterTankFlowActive;
 	}
 			
+	/**
+	 * Stop the flow of osmotic water flow and stop the device.
+	 */
+	public void stop() {
+		this.stopFlow();
+		this.delete();
+	}
 	
 }

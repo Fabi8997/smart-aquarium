@@ -135,6 +135,7 @@ public class SmartAquariumApp {
 		 
 		//TODO
 		//Mandare i segnali di registrazione ai CoAP devices e rimetterli in stato di attesa di registrazione
+		//Manca solamente il controllo o fan o heater allora stoppa il device!!
 	}
 
 	/**

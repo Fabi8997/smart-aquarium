@@ -152,18 +152,17 @@ public class MQTTCollector implements MqttCallback {
 	}
 
 	/**
-	 * TODO
+	 * Send a message to simulate the osmotic water tank status. This methods is published in the osmotic water tank topic,
+	 * the temperature device will read it and simulates its behavior accordingly.
 	 * @param message
 	 */
 	public void simulateOsmoticWaterTank(String message) {
 		try {
 			mqttClient.publish( this.osmoticWaterTankTopic , new MqttMessage(message.getBytes()));
 		} catch (MqttPersistenceException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			System.out.println(LOG_ERROR + " " + e.getMessage());
 		} catch (MqttException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			System.out.println(LOG_ERROR + " " + e.getMessage());
 		}
 	}
 	
@@ -176,11 +175,9 @@ public class MQTTCollector implements MqttCallback {
 		try {
 			mqttClient.publish( this.fanTopic , new MqttMessage(message.getBytes()));
 		} catch (MqttPersistenceException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			System.out.println(LOG_ERROR + " " + e.getMessage());
 		} catch (MqttException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			System.out.println(LOG_ERROR + " " + e.getMessage());
 		}
 	}
 	
@@ -193,11 +190,9 @@ public class MQTTCollector implements MqttCallback {
 		try {
 			mqttClient.publish( this.heaterTopic , new MqttMessage(message.getBytes()));
 		} catch (MqttPersistenceException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			System.out.println(LOG_ERROR + " " + e.getMessage());
 		} catch (MqttException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			System.out.println(LOG_ERROR + " " + e.getMessage());
 		}
 	}
 	
@@ -211,18 +206,15 @@ public class MQTTCollector implements MqttCallback {
 			
 			mqttClient.publish( this.co2DispenserTopic , new MqttMessage(message.getBytes()));
 		} catch (MqttPersistenceException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			System.out.println(LOG_ERROR + " " + e.getMessage());
 		} catch (MqttException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			System.out.println(LOG_ERROR + " " + e.getMessage());
 		}
 	}
 	
-	//TODO How to handle lost of connection
 	@Override
 	public void connectionLost(Throwable cause) {
-		// TODO Auto-generated method stub
+		System.out.println(LOG_ERROR + " Connection lost due to the following cause: " + cause.getMessage());
 
 	}
 
@@ -293,8 +285,7 @@ public class MQTTCollector implements MqttCallback {
 
 	@Override
 	public void deliveryComplete(IMqttDeliveryToken token) {
-		// TODO Auto-generated method stub
-
+		//This is not required since the messages sent are only used for simulation purposes
 	}
 	
 	/**

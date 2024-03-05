@@ -16,6 +16,7 @@
 
 static void res_put_handler(coap_message_t *request, coap_message_t *response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset);
 static void res_get_handler(coap_message_t *request, coap_message_t *response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset);
+static void res_delete_handler(coap_message_t *request, coap_message_t *response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset);
 static void res_event_handler();
 
 bool flow = false;
@@ -29,8 +30,16 @@ EVENT_RESOURCE(res_tank,
          res_get_handler,
          NULL,
          res_put_handler,
-	 NULL,
+	 res_delete_handler,
          res_event_handler);
+
+
+static void 
+res_delete_handler(coap_message_t *request, coap_message_t *response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset)
+{
+	LOG_INFO("Received delete request:\n");
+	to_stop = true;
+}
 
 static void
 res_get_handler(coap_message_t *request, coap_message_t *response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset)

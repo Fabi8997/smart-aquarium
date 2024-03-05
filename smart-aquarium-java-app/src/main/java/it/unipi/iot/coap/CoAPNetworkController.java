@@ -5,8 +5,6 @@ import org.eclipse.californium.core.CoapObserveRelation;
 import org.eclipse.californium.core.CoapResource;
 import org.eclipse.californium.core.CoapResponse;
 import org.eclipse.californium.core.CoapServer;
-import org.eclipse.californium.core.coap.MediaTypeRegistry;
-import org.eclipse.californium.core.coap.Response;
 import org.eclipse.californium.core.coap.CoAP.ResponseCode;
 import org.eclipse.californium.core.server.resources.CoapExchange;
 import org.json.simple.JSONObject;
@@ -33,6 +31,7 @@ import it.unipi.iot.log.Colors;
 public class CoAPNetworkController extends CoapServer {
 	
 	private static final String LOG = "[" + Colors.ANSI_PURPLE + "CoAP Controller" + Colors.ANSI_RESET + "]";
+	private static final String LOG_ERROR = "[" + Colors.ANSI_RED + "CoAP Controller" + Colors.ANSI_RESET + " ]";
 	
 	//CoAP Clients
 	OsmoticWaterTank osmoticWaterTank;
@@ -59,7 +58,7 @@ public class CoAPNetworkController extends CoapServer {
 	public CoAPNetworkController(ConfigurationParameters configurationParameters, DatabaseManager db) {
 		super();
 		this.add(new CoAPRegistrationResource("registration"));
-		//this.addEndpoint(new Endpoint());
+		//TODO this.addEndpoint(new Endpoint());
 		this.configurationParameters = configurationParameters;
 		this.db = db;
 		this.osmoticWaterTankDatabaseTableName = configurationParameters.osmoticWaterTankDatabaseTableName;
@@ -123,21 +122,6 @@ public class CoAPNetworkController extends CoapServer {
 		public CoAPRegistrationResource(String name) {
 			super(name);
 	 	}
-		
-		//TODO GET handle, to obtain from the app what devices are registered
-	 	public void handleGET(CoapExchange exchange) {
-	 		
-	 		Response response = new Response(ResponseCode.CONTENT);
-	 		
-	 		if(exchange.getRequestOptions().getAccept() == MediaTypeRegistry.APPLICATION_JSON) {
-	 			response.getOptions().setContentFormat(MediaTypeRegistry.APPLICATION_JSON);
-	 			response.setPayload("{\"value\":\"10\"}"); 			
-	 		} else {
-	 			response.setPayload("Hello");
-	 		}
-	 		
-			exchange.respond(response);
-	 	}
 	 	
 	 	/**
 	 	 * Handles the POST request in the given CoAPExchange. It creates CoAP client to interact with the registered devices.
@@ -191,9 +175,8 @@ public class CoAPNetworkController extends CoapServer {
 									try {
 										requestTextJSON = (JSONObject) parser.parse(response.getResponseText());
 									} catch (ParseException e) {
-										// TODO Auto-generated catch block
-										e.printStackTrace();
 										
+										System.out.println(LOG_ERROR + " " + e.getMessage());	
 									}
 
 									//If correctly parsed
@@ -226,7 +209,7 @@ public class CoAPNetworkController extends CoapServer {
 									}
 								}
 								@Override public void onError() {
-									System.err.println("-Failed--------");
+									System.out.println(LOG_ERROR + " Connection to the osmotic water tank resource lost...");
 								}
 							});
 
@@ -264,8 +247,7 @@ public class CoAPNetworkController extends CoapServer {
 									try {
 										requestTextJSON = (JSONObject) parser.parse(response.getResponseText());
 									} catch (ParseException e) {
-										// TODO Auto-generated catch block
-										e.printStackTrace();
+										System.out.println(LOG_ERROR + " " + e.getMessage());
 										
 									}
 
@@ -303,8 +285,9 @@ public class CoAPNetworkController extends CoapServer {
 									    				"} in " + co2DispenserDatabaseTableName + "." );
 									}
 								}
+								
 								@Override public void onError() {
-									System.err.println("-Failed--------");
+									System.out.println(LOG_ERROR + " Connection to the CO2 tank resource lost...");
 								}
 							});
 				
@@ -354,12 +337,19 @@ public class CoAPNetworkController extends CoapServer {
 	*/
 	public void close() {
 		
-		//TODO Send a remove register message
-		//co2Dispenser.delete();
+		//Turn off the dispenser
+		this.co2Dispenser.stop();
 		this.co2Dispenser = null;
+		
+		//Turn off the osmotic water tank
+		this.osmoticWaterTank.stop();
 		this.osmoticWaterTank = null;
+		
+		//Turn off the temperature controller, the fan and the heater
+		this.temperatureController.stop();
 		this.temperatureController = null;
 		
+		//Remove the observe relations
 		if(this.observeCO2TankRelation != null) {
 			this.observeCO2TankRelation.reactiveCancel();
 			System.out.println(LOG + " CO2 tank observe relation cancelled.");
@@ -369,6 +359,7 @@ public class CoAPNetworkController extends CoapServer {
 			System.out.println(LOG + " Osmotic water tank observe relation cancelled.");
 		}
 		
+		//Close the server
 		this.destroy();
 		System.out.println(LOG + " CoAP server closed correctly.");
 	}

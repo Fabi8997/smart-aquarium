@@ -28,7 +28,6 @@
 // Define the resource
 extern coap_resource_t res_tank;
 
-
 // Service URL
 char *service_url = "/registration";
 
@@ -38,10 +37,12 @@ static bool connected = false;
 // To check if the device is registered to the coap reg server
 static bool registered = false;
 
+//To check if the application has sent a stop message
+bool to_stop = false;
+
 /* Declare and auto-start this file's process */
 PROCESS(osmotic_water_device, "Osmotic water tank");
 AUTOSTART_PROCESSES(&osmotic_water_device);
-
 
 // Timers used to make the tries for the connection and registration
 static struct etimer wait_connection;
@@ -170,6 +171,11 @@ PROCESS_THREAD(osmotic_water_device, ev, data)
   
   while(1){
 
+	//Check if it the application has sent a message to stop the device
+	if(to_stop){
+		break;
+	}
+
 	//Wait for the expiration of the timer OR a button event
 	PROCESS_WAIT_EVENT_UNTIL( ev == PROCESS_EVENT_TIMER || ev == button_hal_periodic_event );
 	
@@ -223,5 +229,6 @@ PROCESS_THREAD(osmotic_water_device, ev, data)
 	
   }
 
+  LOG_INFO("Device stopped correctly!\n");
   PROCESS_END();
 }

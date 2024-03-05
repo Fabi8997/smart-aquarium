@@ -22,6 +22,8 @@ import it.unipi.iot.log.Colors;
 public class TemperatureController {
 	
 	private static final String LOG = "[" + Colors.ANSI_CYAN + "Smart Aquarium " + Colors.ANSI_RESET + "]";
+	private static final String LOG_ERROR = "[" + Colors.ANSI_RED + "Smart Aquarium " + Colors.ANSI_RESET + " ]";
+	
 	
 	//Status
 	private boolean fanActive;
@@ -165,7 +167,7 @@ public class TemperatureController {
 		        }
 	
 		        public void onError() {
-		                System.err.println(LOG + " Put operation failed [device: temperatureController].");
+		                System.out.println(LOG_ERROR + " Put operation failed [device: temperatureController].");
 		        }
 
 		}, "mode=off", MediaTypeRegistry.TEXT_PLAIN);
@@ -191,4 +193,14 @@ public class TemperatureController {
 		return heaterClient;
 	}
 	
+	/**
+	 * Stop the fan, the heater and send a message to stop the devices.
+	 */
+	public void stop() {
+		this.stopFan();
+		this.stopHeater();
+		
+		this.getFanClient().delete();
+		this.getHeaterClient().delete();
+	}
 }

@@ -22,6 +22,7 @@ import it.unipi.iot.log.Colors;
 public class CO2Dispenser extends CoapClient {
 	
 	private static final String LOG = "[" + Colors.ANSI_CYAN + "Smart Aquarium " + Colors.ANSI_RESET + "]";
+	private static final String LOG_ERROR = "[" + Colors.ANSI_RED + "Smart Aquarium " + Colors.ANSI_RESET + " ]";
 	
 	//Status
 	float co2DispenserTankLevel; 
@@ -123,7 +124,7 @@ public class CO2Dispenser extends CoapClient {
             }
 
             public void onError() {
-                System.err.println(LOG + " Put operation failed [device: CO2Dispenser].");
+                System.out.println(LOG_ERROR + " Put operation failed [device: CO2Dispenser].");
             }
 
 			
@@ -156,7 +157,7 @@ public class CO2Dispenser extends CoapClient {
             }
 
             public void onError() {
-                System.err.println(LOG + " Put operation failed [device: CO2Dispenser].");
+                System.out.println(LOG_ERROR + " Put operation failed [device: CO2Dispenser].");
             }
 
 			
@@ -193,7 +194,7 @@ public class CO2Dispenser extends CoapClient {
             }
 
             public void onError() {
-                System.err.println(LOG + " Put operation failed [device: CO2Dispenser].");
+                System.out.println(LOG_ERROR + " Put operation failed [device: CO2Dispenser].");
             }
 
 			
@@ -233,5 +234,12 @@ public class CO2Dispenser extends CoapClient {
 		this.co2DispenserTankLevel = co2DispenserTankLevel;
 	}
 	
+	/**
+	 * Stop the flow of CO2 and stop the device.
+	 */
+	public void stop() {
+		this.stopFlow();
+		this.delete();
+	}
 	
 }
