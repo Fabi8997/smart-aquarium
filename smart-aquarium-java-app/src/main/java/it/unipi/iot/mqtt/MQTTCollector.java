@@ -27,6 +27,7 @@ public class MQTTCollector implements MqttCallback {
 	
 	
 	private static final String LOG = "[" + Colors.ANSI_YELLOW + "MQTT Collector" + Colors.ANSI_RESET + " ]";
+	private static final String LOG_ERROR = "[" + Colors.ANSI_RED + "MQTT Collector" + Colors.ANSI_RESET + " ]";
 	
 	//Topic to retrieve the data published by the sensors
 	private final String pHTopic;
@@ -59,7 +60,7 @@ public class MQTTCollector implements MqttCallback {
 	private boolean newCurrentPH;
 	private boolean newCurrentTemperature;
 	
-	//MqttClient to subscribe and publish(FOR SIMULATION)
+	//MqttClient to subscribe and publish
 	private MqttClient mqttClient;
 	
 	
@@ -295,5 +296,38 @@ public class MQTTCollector implements MqttCallback {
 		// TODO Auto-generated method stub
 
 	}
-
+	
+	/**
+	 * Unsubscribe from all the topics, disconnect from the MQTT server and close the client releasing all the resources.
+	 */
+	public void close() {
+		
+		try {
+			
+			//Unsubscribe from the topics
+			System.out.println(LOG + " Unsubscribing from the topics...");
+			this.mqttClient.unsubscribe(new String[]{
+					this.co2DispenserTopic,
+					this.fanTopic,
+					this.heaterTopic,
+					this.kHTopic,
+					this.osmoticWaterTankTopic,
+					this.pHTopic,
+					this.temperatureTopic});
+			
+			//Disconnect from the server
+			System.out.println(LOG + " Disconnecting from the server...");
+			this.mqttClient.disconnect();
+			
+			//Close the client
+			System.out.println(LOG + " Closing the client and releasing the resources...");
+			this.mqttClient.close();
+			
+			System.out.println(LOG + " MQTT Collector closed successfully.");
+			
+		} catch (MqttException e) {
+			System.out.println(LOG_ERROR + " Problem during the closing of the MQTT collector!");
+			e.printStackTrace();
+		}
+	}
 }

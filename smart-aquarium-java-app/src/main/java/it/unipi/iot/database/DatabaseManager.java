@@ -6,6 +6,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 import it.unipi.iot.configuration.ConfigurationParameters;
+import it.unipi.iot.log.Colors;
 
 /**
  * 
@@ -15,6 +16,8 @@ import it.unipi.iot.configuration.ConfigurationParameters;
  *
  */
 public class DatabaseManager {
+	
+	private static final String LOG_ERROR = "[" + Colors.ANSI_RED + "Database Manager" + Colors.ANSI_RESET + "]";
 	
 	//Configuration parameters to access the DB
     private final String databaseUsername;
@@ -86,7 +89,7 @@ public class DatabaseManager {
 			preparedStatementCO2Dispenser = connection.prepareStatement("INSERT INTO " +  this.co2DispenserDatabaseTableName + " (level, value) VALUES (?,?)");
 			
 		} catch (SQLException e) {
-			System.out.println("[DatabaseManager] Error during the connection to the database.");
+			System.out.println(LOG_ERROR + " Error during the connection to the database.");
 			e.printStackTrace();
 		}   
 	}
@@ -110,7 +113,7 @@ public class DatabaseManager {
         		
         		//If something bad happens throw an exception, the program must continue
         		if(preparedStatementPH.executeUpdate() != 1) {
-        			throw new SQLException("[DatabaseManager] Problem during insertion in " + pHDatabaseTableName + "!\n");
+        			throw new SQLException(LOG_ERROR + " Problem during insertion in " + pHDatabaseTableName + "!\n");
         		}else {
         			
         			//Record inserted correctly
@@ -125,7 +128,7 @@ public class DatabaseManager {
         		
         		//If something bad happens throw an exception, the program must continue
         		if(preparedStatementKH.executeUpdate() != 1) {
-        			throw new SQLException("[DatabaseManager] Problem during insertion in " + kHDatabaseTableName + "!\n");
+        			throw new SQLException(LOG_ERROR + " Problem during insertion in " + kHDatabaseTableName + "!\n");
         		}else {
         			
         			//Record inserted correctly
@@ -140,7 +143,7 @@ public class DatabaseManager {
         		
         		//If something bad happens throw an exception, the program must continue
         		if(preparedStatementTemperature.executeUpdate() != 1) {
-        			throw new SQLException("[DatabaseManager] Problem during insertion in " + temperatureDatabaseTableName + "!\n");
+        			throw new SQLException(LOG_ERROR + " Problem during insertion in " + temperatureDatabaseTableName + "!\n");
         		}else {
         			
         			//Record inserted correctly
@@ -153,7 +156,7 @@ public class DatabaseManager {
         		
         		//If something bad happens throw an exception, the program must continue
         		if(preparedStatementOsmoticWaterTank.executeUpdate() != 1) {
-        			throw new SQLException("[DatabaseManager] Problem during insertion in " + osmoticWaterTankDatabaseTableName + "!\n");
+        			throw new SQLException(LOG_ERROR + " Problem during insertion in " + osmoticWaterTankDatabaseTableName + "!\n");
         		}else {
         			
         			//Record inserted correctly
@@ -167,7 +170,7 @@ public class DatabaseManager {
         		
         		//If something bad happens throw an exception, the program must continue
         		if(preparedStatementCO2Dispenser.executeUpdate() != 1) {
-        			throw new SQLException("[DatabaseManager] Problem during insertion in " + co2DispenserDatabaseTableName + "!\n");
+        			throw new SQLException(LOG_ERROR + " Problem during insertion in " + co2DispenserDatabaseTableName + "!\n");
         		}else {
         			
         			//Record inserted correctly
@@ -182,4 +185,21 @@ public class DatabaseManager {
         return false;
     }
 
+    /**
+     * Releases this Connection object's database and JDBC resources immediately instead of waiting for them to be automatically released.
+     */
+    public void close() {
+    	try {
+    		this.preparedStatementCO2Dispenser.close();
+    		this.preparedStatementKH.close();
+    		this.preparedStatementOsmoticWaterTank.close();
+    		this.preparedStatementPH.close();
+    		this.preparedStatementTemperature.close();
+			this.connection.close();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			System.out.println(LOG_ERROR + " Problem during the closing of the connection.");
+			e.printStackTrace();
+		}
+    }
 }

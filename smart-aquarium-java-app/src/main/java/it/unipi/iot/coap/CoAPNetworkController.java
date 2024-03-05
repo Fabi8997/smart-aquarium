@@ -36,7 +36,8 @@ public class CoAPNetworkController extends CoapServer {
 	
 	//CoAP Clients
 	OsmoticWaterTank osmoticWaterTank;
-	CoapObserveRelation observeTankRelation;
+	CoapObserveRelation observeWaterTankRelation;
+	CoapObserveRelation observeCO2TankRelation;
 	TemperatureController temperatureController;
 	CO2Dispenser co2Dispenser;
 	
@@ -58,6 +59,7 @@ public class CoAPNetworkController extends CoapServer {
 	public CoAPNetworkController(ConfigurationParameters configurationParameters, DatabaseManager db) {
 		super();
 		this.add(new CoAPRegistrationResource("registration"));
+		//this.addEndpoint(new Endpoint());
 		this.configurationParameters = configurationParameters;
 		this.db = db;
 		this.osmoticWaterTankDatabaseTableName = configurationParameters.osmoticWaterTankDatabaseTableName;
@@ -120,7 +122,6 @@ public class CoAPNetworkController extends CoapServer {
 		 */
 		public CoAPRegistrationResource(String name) {
 			super(name);
-			//setObservable(true); USELESS?
 	 	}
 		
 		//TODO GET handle, to obtain from the app what devices are registered
@@ -179,7 +180,7 @@ public class CoAPNetworkController extends CoapServer {
 					osmoticWaterTank = new OsmoticWaterTank(ipAddress,configurationParameters);
 					
 					//Create the observer relation
-					observeTankRelation = osmoticWaterTank.observe(
+					observeWaterTankRelation = osmoticWaterTank.observe(
 							new CoapHandler() {
 								@Override public void onLoad(CoapResponse response) {
 									
@@ -252,7 +253,7 @@ public class CoAPNetworkController extends CoapServer {
 					co2Dispenser = new CO2Dispenser(ipAddress,configurationParameters);
 					
 					//Create the observer relation
-					observeTankRelation = co2Dispenser.observe(
+					observeCO2TankRelation = co2Dispenser.observe(
 							new CoapHandler() {
 								@Override public void onLoad(CoapResponse response) {
 									
@@ -346,5 +347,29 @@ public class CoAPNetworkController extends CoapServer {
 				exchange.respond(ResponseCode.BAD_REQUEST);
 			}
 	 	}
+	}
+	
+	/**
+	* Cancel the observe relation, release the CoAP Client resources and destroy the CoAP server.
+	*/
+	public void close() {
+		
+		//TODO Send a remove register message
+		//co2Dispenser.delete();
+		this.co2Dispenser = null;
+		this.osmoticWaterTank = null;
+		this.temperatureController = null;
+		
+		if(this.observeCO2TankRelation != null) {
+			this.observeCO2TankRelation.reactiveCancel();
+			System.out.println(LOG + " CO2 tank observe relation cancelled.");
+		}
+		if(this.observeWaterTankRelation != null) {
+			this.observeWaterTankRelation.reactiveCancel();
+			System.out.println(LOG + " Osmotic water tank observe relation cancelled.");
+		}
+		
+		this.destroy();
+		System.out.println(LOG + " CoAP server closed correctly.");
 	}
 }

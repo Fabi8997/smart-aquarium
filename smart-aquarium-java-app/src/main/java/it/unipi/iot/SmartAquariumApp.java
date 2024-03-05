@@ -34,7 +34,7 @@ public class SmartAquariumApp {
 	private static final String LOG = "[" + Colors.ANSI_CYAN + "Smart Aquarium " + Colors.ANSI_RESET + "]";
 	
 	// Possible commands
-    private static String[] possibleCommands = {"add", "delete", "update", "search", "quit"};
+    private static String[] possibleCommands = {"add", "delete", "update", "search", ":quit"};
 
 
 	public static void main(String[] args) throws MqttException {
@@ -105,12 +105,23 @@ public class SmartAquariumApp {
 	        if (isValidCommand(userInput)) {
 	            System.out.println(LOG + " Executing command: " + userInput);
 	            
-	            if (userInput.equals("quit")) {
+	            if (userInput.equals(":quit")) {
+	            	
+	            	//Stop the control logic thread
+	            	ControlLogicThread.stopControlLogicLoop();
+	            	
+	            	//Release the MQTT collector resources and remove the registration from the topics
+	            	mqttCollector.close();
 	            	
 	            	//Remove the registration of the CoAP elements
 	                //So they stop and tries to register again, so they move back to the previous state!
+	            	coapNetworkController.close();
+	            	
 	            	//Close the connection with the DB
-	            	//Close the connection with the scanner
+	            	db.close();
+	            	
+	            	//Close the scanner
+	            	scanner.close();
 	            	
 	                break; // Exit loop if the user wants to quit
 	            }
@@ -120,8 +131,10 @@ public class SmartAquariumApp {
 	        }
 		}
 		
-		// Gestire le temporizzazioni
+		System.out.println(LOG + " Bye!");
 		 
+		//TODO
+		//Mandare i segnali di registrazione ai CoAP devices e rimetterli in stato di attesa di registrazione
 	}
 
 	/**

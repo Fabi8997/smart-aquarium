@@ -2,6 +2,7 @@ package it.unipi.iot.control;
 
 import it.unipi.iot.coap.CoAPNetworkController;
 import it.unipi.iot.configuration.ConfigurationParameters;
+import it.unipi.iot.log.Colors;
 import it.unipi.iot.mqtt.MQTTCollector;
 
 
@@ -18,6 +19,9 @@ import it.unipi.iot.mqtt.MQTTCollector;
  *
  */
 public class ControlLogicThread extends Thread {
+
+	// To better visualize the terminal logs
+	private static final String LOG = "[" + Colors.ANSI_CYAN + "Smart Aquarium " + Colors.ANSI_RESET + "]";
 	
 	private ConfigurationParameters configurationParameters;
 	private MQTTCollector mqttCollector;
@@ -26,6 +30,8 @@ public class ControlLogicThread extends Thread {
 	// To keep track of the pH simulation status
 	private static String pHSimulationType = "OFF";
 	
+	//To notify when the Thread should be stopped
+	private static boolean toStop = false;
 	
 	/**
 	 * Class constructor.
@@ -45,7 +51,7 @@ public class ControlLogicThread extends Thread {
 	@Override
 	public void run() {
 		//Main cycle
-				while(true) {
+				while(!toStop) {
 					
 					//Every sleepIntervalApp milliseconds the status of the values is checked
 					try {
@@ -100,6 +106,7 @@ public class ControlLogicThread extends Thread {
 					}
 				}
 		
+	            System.out.println(LOG + " Control loop ended.");
 	}
 	
 	/**
@@ -323,5 +330,11 @@ public class ControlLogicThread extends Thread {
 		return true;
 	}
 	
+	/**
+	 * Stops the control logic loop.
+	 */
+	public static void stopControlLogicLoop() {
+		toStop = true;
+	}
 
 }
