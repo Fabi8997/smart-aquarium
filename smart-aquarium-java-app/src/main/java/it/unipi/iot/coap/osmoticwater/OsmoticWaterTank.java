@@ -22,10 +22,11 @@ public class OsmoticWaterTank extends CoapClient{
 	
 	private static final String LOG = "[" + Colors.ANSI_CYAN + "Smart Aquarium " + Colors.ANSI_RESET + "]";
 	private static final String LOG_ERROR = "[" + Colors.ANSI_RED + "Smart Aquarium " + Colors.ANSI_RESET + " ]";
-	
+
 	//Osmotic water tank status
 	float osmoticWaterTankLevel;
 	boolean osmoticWaterTankFlowActive;
+	float minLevel;
 	
 	/**
 	 * Class constructor.
@@ -38,6 +39,7 @@ public class OsmoticWaterTank extends CoapClient{
 		super("coap://[" + ipAddress + "]/"+configurationParameters.osmoticWaterTankTopic+"/tank");
 		
 		this.osmoticWaterTankFlowActive = false;
+		this.minLevel = configurationParameters.minOsmoticWaterTankLevel;
 	}
 	
 	public void activateFlow() {
@@ -108,6 +110,10 @@ public class OsmoticWaterTank extends CoapClient{
 
 	public void setOsmoticWaterTankLevel(float osmoticWaterTankLevel) {
 		this.osmoticWaterTankLevel = osmoticWaterTankLevel;
+	}
+	
+	public boolean toBeFilled() {
+		return (this.osmoticWaterTankLevel <= this.minLevel);
 	}
 
 	public boolean isOsmoticWaterTankFlowActive() {

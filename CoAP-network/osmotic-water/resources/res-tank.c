@@ -22,7 +22,7 @@ static void res_event_handler();
 
 static bool flow = false;
 float tank_level = 5000.0;
-static float minimum_tank_level = 500.0;
+static float minimum_tank_level = 100.0;
 bool to_be_filled = false;
 
 

@@ -29,6 +29,7 @@ public class CO2Dispenser extends CoapClient {
 	boolean co2DispenserTankFlowActive;
 	private float currentVariation;
 	private float currentCO2;
+	float minLevel;
 	
 	//TODO Define the threshold
 	private static float THRESHOLD = (float) 2;
@@ -44,6 +45,8 @@ public class CO2Dispenser extends CoapClient {
 	public CO2Dispenser(String ipAddress, ConfigurationParameters configurationParameters) {
 			
 			super("coap://[" + ipAddress + "]/"+configurationParameters.co2DispenserTopic+"/tank");
+			
+			this.minLevel = configurationParameters.minCO2tankLevel;
 			
 			this.co2DispenserTankFlowActive = false;
 			
@@ -219,6 +222,9 @@ public class CO2Dispenser extends CoapClient {
 		return co2DispenserTankFlowActive;
 	}
 
+	public boolean toBeFilled() {
+		return (this.co2DispenserTankLevel <= this.minLevel);
+	}
 
 	public void setCo2DispenserTankFlowActive(boolean co2DispenserTankFlowActive) {
 		this.co2DispenserTankFlowActive = co2DispenserTankFlowActive;

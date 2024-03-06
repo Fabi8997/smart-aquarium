@@ -20,8 +20,8 @@ static void res_delete_handler(coap_message_t *request, coap_message_t *response
 static void res_event_handler();
 
 bool flow = false;
-float tank_level = 5000.0;
-static float minimum_tank_level = 500.0;
+float tank_level = 7000.0;
+static float minimum_tank_level = 400.0;
 bool to_be_filled = false;
 float co2_value = 0;
 

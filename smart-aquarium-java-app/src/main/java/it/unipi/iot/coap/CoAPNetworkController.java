@@ -310,7 +310,7 @@ public class CoAPNetworkController extends CoapServer {
 				if(temperatureController == null) {
 					
 					//Create a new CoAP Client
-					temperatureController = new TemperatureController(ipAddress,configurationParameters);
+					temperatureController = new TemperatureController(ipAddress,configurationParameters,db);
 					
 					System.out.println(LOG + " new " + device + " registered!");
 					

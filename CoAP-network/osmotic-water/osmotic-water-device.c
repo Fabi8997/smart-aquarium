@@ -23,7 +23,7 @@
 // Define the interval to wait before sending the new requests
 #define START_INTERVAL 5
 #define REGISTRATION_INTERVAL 1
-#define FLOW_INTERVAL 5
+#define FLOW_INTERVAL 20
 
 // Define the resource
 extern coap_resource_t res_tank;

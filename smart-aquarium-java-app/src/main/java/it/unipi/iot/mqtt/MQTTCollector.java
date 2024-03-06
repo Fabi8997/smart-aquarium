@@ -1,5 +1,7 @@
 package it.unipi.iot.mqtt;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttClient;
@@ -63,6 +65,8 @@ public class MQTTCollector implements MqttCallback {
 	//MqttClient to subscribe and publish
 	private MqttClient mqttClient;
 	
+	//Thread safe variable accessed by the control loop thread!
+	private AtomicBoolean closed;
 	
 	/**
 	 * Constructor of the class MQTT Collector. <br> It reads the configuration parameters read from the configuration file config.xml
@@ -122,6 +126,9 @@ public class MQTTCollector implements MqttCallback {
         //Subscribe to the temperature topic
         this.mqttClient.subscribe(temperatureTopic);
         
+        //Not closed
+        this.closed = new AtomicBoolean(false);
+        
 	}
 
 	public float getCurrentKH() {
@@ -149,6 +156,10 @@ public class MQTTCollector implements MqttCallback {
 
 	public boolean isNewCurrentTemperature() {
 		return newCurrentTemperature;
+	}
+	
+	public boolean isClosed() {
+		return this.closed.get();
 	}
 
 	/**
@@ -293,6 +304,8 @@ public class MQTTCollector implements MqttCallback {
 	 */
 	public void close() {
 		
+		this.closed.set(true);
+		
 		try {
 			
 			//Unsubscribe from the topics
@@ -321,4 +334,5 @@ public class MQTTCollector implements MqttCallback {
 			e.printStackTrace();
 		}
 	}
+	
 }

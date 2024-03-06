@@ -32,6 +32,8 @@ public class DatabaseManager {
     private final String temperatureDatabaseTableName;
     private final String osmoticWaterTankDatabaseTableName;
     private final String co2DispenserDatabaseTableName;
+    private final String fanDatabaseTableName;
+    private final String heaterDatabaseTableName;
     
     //Prepared statement to be used during the insertion
     private PreparedStatement preparedStatementPH;
@@ -39,6 +41,8 @@ public class DatabaseManager {
     private PreparedStatement preparedStatementTemperature;
     private PreparedStatement preparedStatementOsmoticWaterTank;
     private PreparedStatement preparedStatementCO2Dispenser;
+    private PreparedStatement preparedStatementFan;
+    private PreparedStatement preparedStatementHeater;
     
     //Connection to the DB
     private Connection connection;
@@ -61,6 +65,8 @@ public class DatabaseManager {
 		this.temperatureDatabaseTableName = configurationParameters.temperatureDatabaseTableName;
 		this.osmoticWaterTankDatabaseTableName = configurationParameters.osmoticWaterTankDatabaseTableName;
 		this.co2DispenserDatabaseTableName = configurationParameters.co2DispenserDatabaseTableName;
+		this.fanDatabaseTableName = configurationParameters.fanDatabaseTableName;
+		this.heaterDatabaseTableName = configurationParameters.heaterDatabaseTableName;
 		
 		//Create the connection to MYSQL
 		StringBuilder stringBuilder = new StringBuilder("jdbc:mysql://");
@@ -88,6 +94,12 @@ public class DatabaseManager {
 			//Create a prepared statement to interact when the table is CO2Dispenser
 			preparedStatementCO2Dispenser = connection.prepareStatement("INSERT INTO " +  this.co2DispenserDatabaseTableName + " (level, value) VALUES (?,?)");
 			
+			//Create a prepared statement to interact when the table is Fan
+			preparedStatementPH = connection.prepareStatement("INSERT INTO " +  this.pHDatabaseTableName + " (active) VALUES (?)");
+
+			//Create a prepared statement to interact when the table is Heater
+			preparedStatementPH = connection.prepareStatement("INSERT INTO " +  this.pHDatabaseTableName + " (active) VALUES (?)");
+
 		} catch (SQLException e) {
 			System.out.println(LOG_ERROR + " Error during the connection to the database.");
 			e.printStackTrace();
@@ -176,6 +188,41 @@ public class DatabaseManager {
         			//Record inserted correctly
         			return true;
         		}
+        		
+        	//If the table is the table of the fan
+        	}else if(table.equals(fanDatabaseTableName) ) {
+        		
+        		boolean bool_value = (value == 0)?false:true;
+        		
+        		//Use the prepared statement of the Fan
+        		preparedStatementFan.setBoolean(1, bool_value);
+        		
+        		//If something bad happens throw an exception, the program must continue
+        		if(preparedStatementFan.executeUpdate() != 1) {
+        			throw new SQLException(LOG_ERROR + " Problem during insertion in " + fanDatabaseTableName + "!\n");
+        		}else {
+        			
+        			//Record inserted correctly
+        			return true;
+        		}
+        		
+        	//If the table is the table of the heater
+        	}else if(table.equals(heaterDatabaseTableName) ) {
+        		
+        		boolean bool_value = (value == 0)?false:true;
+        		
+        		//Use the prepared statement of the Heater
+        		preparedStatementHeater.setBoolean(1, bool_value);
+        		
+        		//If something bad happens throw an exception, the program must continue
+        		if(preparedStatementHeater.executeUpdate() != 1) {
+        			throw new SQLException(LOG_ERROR + " Problem during insertion in " + heaterDatabaseTableName + "!\n");
+        		}else {
+        			
+        			//Record inserted correctly
+        			return true;
+        		}
+
         	}
 		} catch (SQLException e) {
 			e.printStackTrace();

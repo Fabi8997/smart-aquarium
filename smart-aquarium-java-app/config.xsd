@@ -15,6 +15,8 @@
         <xs:element type="xs:string" name="temperatureDatabaseTableName"/>
         <xs:element type="xs:string" name="osmoticWaterTankDatabaseTableName"/>
         <xs:element type="xs:string" name="co2DispenserDatabaseTableName"/>
+        <xs:element type="xs:string" name="fanDatabaseTableName"/>
+        <xs:element type="xs:string" name="heaterDatabaseTableName"/>
         <xs:element type="xs:string" name="MQTTBroker"/>
         <xs:element type="xs:string" name="MQTTClientId"/>
         <xs:element type="xs:string" name="pHTopic"/>
@@ -35,6 +37,10 @@
         <xs:element type="xs:float" name="pHOptimalValue"/>
         <xs:element type="xs:float" name="epsilon"/>
         <xs:element type="xs:float" name="epsilonTemperature"/>
+        <xs:element type="xs:float" name="minCO2tankLevel"/>
+        <xs:element type="xs:float" name="minOsmoticWaterTankLevel"/>
+        <xs:element type="xs:float" name="maxCO2tankLevel"/>
+        <xs:element type="xs:float" name="maxOsmoticWaterTankLevel"/>
         <xs:element type="xs:integer" name="sleepIntervalApp"/>
       </xs:sequence>
     </xs:complexType>

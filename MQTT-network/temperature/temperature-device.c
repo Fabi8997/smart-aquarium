@@ -31,7 +31,7 @@ static const char *broker_ip = MQTT_CLIENT_BROKER_IP_ADDR;
 // Defaukt config values
 #define DEFAULT_BROKER_PORT         1883
 #define DEFAULT_PUBLISH_INTERVAL    (30 * CLOCK_SECOND)
-#define SHORT_PUBLISH_INTERVAL (5*CLOCK_SECOND)
+#define SHORT_PUBLISH_INTERVAL (8*CLOCK_SECOND)
 
 
 // We assume that the broker does not require authentication
@@ -208,10 +208,6 @@ have_connectivity(void)
 
 /*Initialized the value of the temperature to the value at the center of the interval*/
 static float temperature_value = 25.0;
-
-/*Extreme of the safe interval for the temperature (to be used for leds)*/
-//static float min_temperature_value = 23.0;
-//static float max_temperature_value = 27.0;
 
 /*Values used respectively to define the upper bound of the possible variation interval and for the standard pH
   variation in case of stabilization using CO2*/

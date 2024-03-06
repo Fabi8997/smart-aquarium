@@ -10,6 +10,8 @@
 	<temperatureDatabaseTableName>Temperature</temperatureDatabaseTableName>
 	<osmoticWaterTankDatabaseTableName>OsmoticWaterTank</osmoticWaterTankDatabaseTableName>
 	<co2DispenserDatabaseTableName>CO2Dispenser</co2DispenserDatabaseTableName>
+	<fanDatabaseTableName>Fan</fanDatabaseTableName>
+	<heaterDatabaseTableName>Heater</heaterDatabaseTableName>
 	<MQTTBroker>tcp://127.0.0.1:1883</MQTTBroker>
 	<MQTTClientId>SmartAquariumMQTTCollector</MQTTClientId>
 	<pHTopic>pH</pHTopic>
@@ -30,5 +32,9 @@
 	<pHOptimalValue>6.75</pHOptimalValue>
 	<epsilon>0.12</epsilon>
 	<epsilonTemperature>0.5</epsilonTemperature>
+	<minCO2tankLevel>400</minCO2tankLevel>
+	<minOsmoticWaterTankLevel>100</minOsmoticWaterTankLevel>
+	<maxCO2tankLevel>7000</maxCO2tankLevel>
+	<maxOsmoticWaterTankLevel>5000</maxOsmoticWaterTankLevel>
 	<sleepIntervalApp>5000</sleepIntervalApp>
 </it.unipi.iot.configuration.ConfigurationParameters>

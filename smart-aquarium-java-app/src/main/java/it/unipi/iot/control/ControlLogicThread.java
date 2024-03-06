@@ -51,7 +51,7 @@ public class ControlLogicThread extends Thread {
 	@Override
 	public void run() {
 		//Main cycle
-				while(!toStop) {
+				while(!toStop && (!mqttCollector.isClosed()) && (coapNetworkController != null)) {
 					
 					//Every sleepIntervalApp milliseconds the status of the values is checked
 					try {
@@ -60,9 +60,12 @@ public class ControlLogicThread extends Thread {
 						e.printStackTrace();
 					}
 					
+					if(toStop) {
+						break;
+					}
 				
 					//If the kH sensor has published a new kH value then check its value
-					if((coapNetworkController != null) && (mqttCollector.isNewCurrentKH())) {
+					if((coapNetworkController != null) && (!mqttCollector.isClosed()) && (mqttCollector.isNewCurrentKH())) {
 						checkKHStatus(
 								mqttCollector,
 								coapNetworkController,
@@ -73,7 +76,7 @@ public class ControlLogicThread extends Thread {
 					}
 					
 					//If the temperature sensor has published a new temperature value then check its value
-					if((coapNetworkController != null) && (mqttCollector.isNewCurrentTemperature())) {
+					if((coapNetworkController != null) && (!mqttCollector.isClosed()) && (mqttCollector.isNewCurrentTemperature())) {
 						checkTemperatureStatus(
 								mqttCollector,
 								coapNetworkController,
@@ -87,7 +90,7 @@ public class ControlLogicThread extends Thread {
 					//If the pH sensor has published a new pH value then check its value
 					//The control of the pH is more difficult, since we've to modify it only when the kH and the temperature  is stable
 					// only in this case we can modify the pH in order to not harm the fishes.
-					if((coapNetworkController != null) && (mqttCollector.isNewCurrentPH())) {
+					if((coapNetworkController != null) && (!mqttCollector.isClosed()) && (mqttCollector.isNewCurrentPH())) {
 						checkPHStatus(
 								mqttCollector,
 								coapNetworkController,
@@ -98,7 +101,7 @@ public class ControlLogicThread extends Thread {
 					}
 					
 					//If all the values are good, then compute the new level of CO2 to be dispensed
-					if((coapNetworkController != null) && (coapNetworkController.getCo2Dispenser() != null) && (areAllMeasuresStable(mqttCollector))) {
+					if((coapNetworkController != null) && (!mqttCollector.isClosed()) && (coapNetworkController.getCo2Dispenser() != null) && (areAllMeasuresStable(mqttCollector))) {
 						coapNetworkController.getCo2Dispenser().computeNewCO2(
 								mqttCollector.getCurrentPH(),
 								mqttCollector.getCurrentKH(),
@@ -173,6 +176,16 @@ public class ControlLogicThread extends Thread {
 		//If kH < LB and the heater is not active
 		if(((mqttCollector.getCurrentTemperature()) < lowerBound) && coapNetworkController.getTemperatureController().areFanHeaterInactive()) {
 			
+			//If the fan is active it means that we've reduced too much the temperature
+			if(coapNetworkController.getTemperatureController().isFanActive()) {
+				
+				//Activate the simulation on temperature device
+				mqttCollector.simulateFan("off");
+				
+				//Send the command to the actuator to stop the fan: mode=off
+				coapNetworkController.getTemperatureController().stopFan();
+			}
+			
 			//Activate the simulation on temperature device
 			mqttCollector.simulateHeater("on");
 			
@@ -181,6 +194,16 @@ public class ControlLogicThread extends Thread {
 			
 		//If kH > UB and the fan is not active
 		}else if ((mqttCollector.getCurrentTemperature() > upperBound && coapNetworkController.getTemperatureController().areFanHeaterInactive()) ) {
+			
+			//If the heater is active it means that we've incremented too much the temperature
+			if(coapNetworkController.getTemperatureController().isHeaterActive()) {
+				
+				//Activate the simulation on temperature device
+				mqttCollector.simulateHeater("off");
+				
+				//Send the command to the actuator to stop the heater: mode=off
+				coapNetworkController.getTemperatureController().stopHeater();;
+			}
 			
 			//Activate the simulation on temperature device
 			mqttCollector.simulateFan("on");

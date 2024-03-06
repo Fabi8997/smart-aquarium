@@ -6,6 +6,7 @@ import org.eclipse.californium.core.CoapResponse;
 import org.eclipse.californium.core.coap.MediaTypeRegistry;
 
 import it.unipi.iot.configuration.ConfigurationParameters;
+import it.unipi.iot.database.DatabaseManager;
 import it.unipi.iot.log.Colors;
 
 /**
@@ -15,15 +16,18 @@ import it.unipi.iot.log.Colors;
  * - stop the fan <br>
  * - activate the heater <br>
  * - stop the heater <br>
- * 
+ * It manages the writes on the database for the tables regarding the fan and the heater.
  * @author Fabi8997
  * 
  */
 public class TemperatureController {
 	
 	private static final String LOG = "[" + Colors.ANSI_CYAN + "Smart Aquarium " + Colors.ANSI_RESET + "]";
+	private static final String LOG2 = "[" + Colors.ANSI_PURPLE + "CoAP Controller" + Colors.ANSI_RESET + "]";
 	private static final String LOG_ERROR = "[" + Colors.ANSI_RED + "Smart Aquarium " + Colors.ANSI_RESET + " ]";
 	
+	//DB manager to set up the connection to the DB and to query it
+	private final DatabaseManager db;
 	
 	//Status
 	private boolean fanActive;
@@ -33,13 +37,15 @@ public class TemperatureController {
 	private CoapClient fanClient;
 	private CoapClient heaterClient;
 	
+	ConfigurationParameters configurationParameters;
+	
 	/**
 	 * Class constructor. It creates two CoapClient to interact with the fan resource and the heater resource.
 	 * 
 	 * @param ipAddress of the URI
 	 * @param configurationParameters configuration parameters
 	 */
-	public TemperatureController(String ipAddress, ConfigurationParameters configurationParameters) {
+	public TemperatureController(String ipAddress, ConfigurationParameters configurationParameters, DatabaseManager db) {
 			
 			//Create two clients to interact with the specified URI
 			this.fanClient = new CoapClient("coap://[" + ipAddress + "]/temperature/fan");
@@ -47,10 +53,28 @@ public class TemperatureController {
 		
 			this.fanActive = false;
 			this.heaterActive = false;
+			
+			this.configurationParameters = configurationParameters;
+			this.db = db;
+			
+			if(db.insertSample(configurationParameters.fanDatabaseTableName, 0, null)) {
+				//LOG
+			    System.out.println(LOG2 + " Inserted {" +
+			    				"\"active\": " + fanActive + "," +
+			    				"} in " + configurationParameters.fanDatabaseTableName + "." );
+			}
+			if(db.insertSample(configurationParameters.heaterDatabaseTableName, 0, null)) {
+				//LOG
+			    System.out.println(LOG2 + " Inserted {" +
+			    				"\"active\": " + heaterActive + "," +
+			    				"} in " + configurationParameters.heaterDatabaseTableName + "." );
+			}
+			
 	}
 	
 	/**
-	 * Send a put request to activate the fan and set accordingly the flag in case of success.
+	 * Send a put request to activate the fan and set accordingly the flag in case of success. It writes also the active flag 
+	 * on the database.
 	 */
 	public void activateFan() {
 		
@@ -67,8 +91,16 @@ public class TemperatureController {
                     	
                     	System.out.println(LOG + " Fan [ mode = "+Colors.ANSI_GREEN+"on"+Colors.ANSI_RESET+" ].");
                     	
+                    	
                     	//Set the flag to signal that the flow is active
                 		fanActive = true;
+                		
+                		if(db.insertSample(configurationParameters.fanDatabaseTableName, 1, null)) {
+            				//LOG
+            			    System.out.println(LOG2 + " Inserted {" +
+            			    				"\"active\": " + fanActive + "," +
+            			    				"} in " + configurationParameters.fanDatabaseTableName + "." );
+            			}
                     }
                 }
             }
@@ -81,7 +113,8 @@ public class TemperatureController {
 	}
 
 	/**
-	 * Send a put request to activate the heater and set accordingly the flag in case of success.
+	 * Send a put request to activate the heater and set accordingly the flag in case of success. It writes also the active flag 
+	 * on the database.
 	 */
 	public void activateHeater() {
 		
@@ -100,6 +133,13 @@ public class TemperatureController {
                     	
                     	//Set the flag to signal that the flow is active
                 		heaterActive = true;
+                		
+                		if(db.insertSample(configurationParameters.heaterDatabaseTableName, 1, null)) {
+            				//LOG
+            			    System.out.println(LOG2 + " Inserted {" +
+            			    				"\"active\": " + heaterActive + "," +
+            			    				"} in " + configurationParameters.heaterDatabaseTableName + "." );
+            			}
                     }
                 }
             }
@@ -112,7 +152,8 @@ public class TemperatureController {
 	}
 	
 	/**
-	 * Send a put request to stop the fan and set accordingly the flag in case of success.
+	 * Send a put request to stop the fan and set accordingly the flag in case of success. It writes also the active flag 
+	 * on the database.
 	 */
 	public void stopFan() {
 		
@@ -128,9 +169,16 @@ public class TemperatureController {
 		                }else {
 		                    	
 		                	System.out.println(LOG + " Fan [ mode = "+Colors.ANSI_RED+"off"+Colors.ANSI_RESET+" ].");
-		                    	
+		                	
 		                    //Set the flag to signal that the fan is stopped
 		                	fanActive = false;
+		                	
+		                	if(db.insertSample(configurationParameters.fanDatabaseTableName, 0, null)) {
+		        				//LOG
+		        			    System.out.println(LOG2 + " Inserted {" +
+		        			    				"\"active\": " + false + "," +
+		        			    				"} in " + configurationParameters.fanDatabaseTableName + "." );
+		        			}
 		                }
 		             }
 		        }
@@ -143,7 +191,8 @@ public class TemperatureController {
 	}
 	
 	/**
-	 * Send a put request to stop the heater and set accordingly the flag in case of success.
+	 * Send a put request to stop the heater and set accordingly the flag in case of success. It writes also the active flag 
+	 * on the database.
 	 */
 	public void stopHeater() {
 		
@@ -162,6 +211,13 @@ public class TemperatureController {
 		                    	
 		                    //Set the flag to signal that the heater is stopped
 		                	heaterActive = false;
+		                	
+		                	if(db.insertSample(configurationParameters.heaterDatabaseTableName, 0, null)) {
+		        				//LOG
+		        			    System.out.println(LOG2 + " Inserted {" +
+		        			    				"\"active\": " + heaterActive + "," +
+		        			    				"} in " + configurationParameters.heaterDatabaseTableName + "." );
+		        			}
 		                }
 		             }
 		        }
@@ -199,8 +255,5 @@ public class TemperatureController {
 	public void stop() {
 		this.stopFan();
 		this.stopHeater();
-		
-		this.getFanClient().delete();
-		this.getHeaterClient().delete();
 	}
 }
