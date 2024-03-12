@@ -6,6 +6,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 import it.unipi.iot.configuration.ConfigurationParameters;
+import it.unipi.iot.log.Colors;
 
 /**
  * 
@@ -15,6 +16,8 @@ import it.unipi.iot.configuration.ConfigurationParameters;
  *
  */
 public class DatabaseManager {
+	
+	private static final String LOG_ERROR = "[" + Colors.ANSI_RED + "Database Manager" + Colors.ANSI_RESET + "]";
 	
 	//Configuration parameters to access the DB
     private final String databaseUsername;
@@ -27,11 +30,19 @@ public class DatabaseManager {
     private final String pHDatabaseTableName;
     private final String kHDatabaseTableName;
     private final String temperatureDatabaseTableName;
+    private final String osmoticWaterTankDatabaseTableName;
+    private final String co2DispenserDatabaseTableName;
+    private final String fanDatabaseTableName;
+    private final String heaterDatabaseTableName;
     
     //Prepared statement to be used during the insertion
     private PreparedStatement preparedStatementPH;
     private PreparedStatement preparedStatementKH;
     private PreparedStatement preparedStatementTemperature;
+    private PreparedStatement preparedStatementOsmoticWaterTank;
+    private PreparedStatement preparedStatementCO2Dispenser;
+    private PreparedStatement preparedStatementFan;
+    private PreparedStatement preparedStatementHeater;
     
     //Connection to the DB
     private Connection connection;
@@ -52,6 +63,10 @@ public class DatabaseManager {
 		this.pHDatabaseTableName = configurationParameters.pHDatabaseTableName;
 		this.kHDatabaseTableName = configurationParameters.kHDatabaseTableName;
 		this.temperatureDatabaseTableName = configurationParameters.temperatureDatabaseTableName;
+		this.osmoticWaterTankDatabaseTableName = configurationParameters.osmoticWaterTankDatabaseTableName;
+		this.co2DispenserDatabaseTableName = configurationParameters.co2DispenserDatabaseTableName;
+		this.fanDatabaseTableName = configurationParameters.fanDatabaseTableName;
+		this.heaterDatabaseTableName = configurationParameters.heaterDatabaseTableName;
 		
 		//Create the connection to MYSQL
 		StringBuilder stringBuilder = new StringBuilder("jdbc:mysql://");
@@ -73,8 +88,20 @@ public class DatabaseManager {
 			//Create a prepared statement to interact when the table is Temperature
 			preparedStatementTemperature = connection.prepareStatement("INSERT INTO " +  this.temperatureDatabaseTableName + " (value) VALUES (?)");
 		
+			//Create a prepared statement to interact when the table is OsmoticWaterTank
+			preparedStatementOsmoticWaterTank = connection.prepareStatement("INSERT INTO " +  this.osmoticWaterTankDatabaseTableName + " (value) VALUES (?)");
+		
+			//Create a prepared statement to interact when the table is CO2Dispenser
+			preparedStatementCO2Dispenser = connection.prepareStatement("INSERT INTO " +  this.co2DispenserDatabaseTableName + " (level, value) VALUES (?,?)");
+			
+			//Create a prepared statement to interact when the table is Fan
+			preparedStatementPH = connection.prepareStatement("INSERT INTO " +  this.pHDatabaseTableName + " (active) VALUES (?)");
+
+			//Create a prepared statement to interact when the table is Heater
+			preparedStatementPH = connection.prepareStatement("INSERT INTO " +  this.pHDatabaseTableName + " (active) VALUES (?)");
+
 		} catch (SQLException e) {
-			System.out.println("[DatabaseManager] Error during the connection to the database.");
+			System.out.println(LOG_ERROR + " Error during the connection to the database.");
 			e.printStackTrace();
 		}   
 	}
@@ -84,8 +111,9 @@ public class DatabaseManager {
 	 * This method allows to insert in the connected database the value passed as second parameter inside the table passed as first argument.
 	 * @param table in which the value must be inserted
 	 * @param value to insert inside the table
+	 * @param level used if the table is CO2Dispenser
 	 */
-    public boolean insertSample(String table, float value) {
+    public boolean insertSample(String table, float value, Float level) {
     	
         try {
         	
@@ -97,7 +125,7 @@ public class DatabaseManager {
         		
         		//If something bad happens throw an exception, the program must continue
         		if(preparedStatementPH.executeUpdate() != 1) {
-        			throw new SQLException("[DatabaseManager] Problem during insertion in " + pHDatabaseTableName + "!\n");
+        			throw new SQLException(LOG_ERROR + " Problem during insertion in " + pHDatabaseTableName + "!\n");
         		}else {
         			
         			//Record inserted correctly
@@ -112,7 +140,7 @@ public class DatabaseManager {
         		
         		//If something bad happens throw an exception, the program must continue
         		if(preparedStatementKH.executeUpdate() != 1) {
-        			throw new SQLException("[DatabaseManager] Problem during insertion in " + kHDatabaseTableName + "!\n");
+        			throw new SQLException(LOG_ERROR + " Problem during insertion in " + kHDatabaseTableName + "!\n");
         		}else {
         			
         			//Record inserted correctly
@@ -127,14 +155,75 @@ public class DatabaseManager {
         		
         		//If something bad happens throw an exception, the program must continue
         		if(preparedStatementTemperature.executeUpdate() != 1) {
-        			throw new SQLException("[DatabaseManager] Problem during insertion in " + temperatureDatabaseTableName + "!\n");
+        			throw new SQLException(LOG_ERROR + " Problem during insertion in " + temperatureDatabaseTableName + "!\n");
         		}else {
         			
         			//Record inserted correctly
         			return true;
         		}
+        	}else if(table.equals(osmoticWaterTankDatabaseTableName) ) {
+        		
+        		//Use the prepared statement of the temperature
+        		preparedStatementOsmoticWaterTank.setFloat(1, value);
+        		
+        		//If something bad happens throw an exception, the program must continue
+        		if(preparedStatementOsmoticWaterTank.executeUpdate() != 1) {
+        			throw new SQLException(LOG_ERROR + " Problem during insertion in " + osmoticWaterTankDatabaseTableName + "!\n");
+        		}else {
+        			
+        			//Record inserted correctly
+        			return true;
+        		}
+        	}else if(table.equals(co2DispenserDatabaseTableName) ) {
+        		
+        		//Use the prepared statement of the temperature
+        		preparedStatementCO2Dispenser.setFloat(1, level);
+        		preparedStatementCO2Dispenser.setFloat(2, value);
+        		
+        		//If something bad happens throw an exception, the program must continue
+        		if(preparedStatementCO2Dispenser.executeUpdate() != 1) {
+        			throw new SQLException(LOG_ERROR + " Problem during insertion in " + co2DispenserDatabaseTableName + "!\n");
+        		}else {
+        			
+        			//Record inserted correctly
+        			return true;
+        		}
+        		
+        	//If the table is the table of the fan
+        	}else if(table.equals(fanDatabaseTableName) ) {
+        		
+        		boolean bool_value = (value == 0)?false:true;
+        		
+        		//Use the prepared statement of the Fan
+        		preparedStatementFan.setBoolean(1, bool_value);
+        		
+        		//If something bad happens throw an exception, the program must continue
+        		if(preparedStatementFan.executeUpdate() != 1) {
+        			throw new SQLException(LOG_ERROR + " Problem during insertion in " + fanDatabaseTableName + "!\n");
+        		}else {
+        			
+        			//Record inserted correctly
+        			return true;
+        		}
+        		
+        	//If the table is the table of the heater
+        	}else if(table.equals(heaterDatabaseTableName) ) {
+        		
+        		boolean bool_value = (value == 0)?false:true;
+        		
+        		//Use the prepared statement of the Heater
+        		preparedStatementHeater.setBoolean(1, bool_value);
+        		
+        		//If something bad happens throw an exception, the program must continue
+        		if(preparedStatementHeater.executeUpdate() != 1) {
+        			throw new SQLException(LOG_ERROR + " Problem during insertion in " + heaterDatabaseTableName + "!\n");
+        		}else {
+        			
+        			//Record inserted correctly
+        			return true;
+        		}
+
         	}
-        	
 		} catch (SQLException e) {
 			e.printStackTrace();
 		} 
@@ -143,4 +232,21 @@ public class DatabaseManager {
         return false;
     }
 
+    /**
+     * Releases this Connection object's database and JDBC resources immediately instead of waiting for them to be automatically released.
+     */
+    public void close() {
+    	try {
+    		this.preparedStatementCO2Dispenser.close();
+    		this.preparedStatementKH.close();
+    		this.preparedStatementOsmoticWaterTank.close();
+    		this.preparedStatementPH.close();
+    		this.preparedStatementTemperature.close();
+			this.connection.close();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			System.out.println(LOG_ERROR + " Problem during the closing of the connection.");
+			e.printStackTrace();
+		}
+    }
 }

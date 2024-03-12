@@ -13,11 +13,35 @@
         <xs:element type="xs:string" name="pHDatabaseTableName"/>
         <xs:element type="xs:string" name="kHDatabaseTableName"/>
         <xs:element type="xs:string" name="temperatureDatabaseTableName"/>
+        <xs:element type="xs:string" name="osmoticWaterTankDatabaseTableName"/>
+        <xs:element type="xs:string" name="co2DispenserDatabaseTableName"/>
+        <xs:element type="xs:string" name="fanDatabaseTableName"/>
+        <xs:element type="xs:string" name="heaterDatabaseTableName"/>
         <xs:element type="xs:string" name="MQTTBroker"/>
         <xs:element type="xs:string" name="MQTTClientId"/>
         <xs:element type="xs:string" name="pHTopic"/>
         <xs:element type="xs:string" name="kHTopic"/>
         <xs:element type="xs:string" name="temperatureTopic"/>
+        <xs:element type="xs:string" name="osmoticWaterTankTopic"/>
+        <xs:element type="xs:string" name="fanTopic"/>
+        <xs:element type="xs:string" name="heaterTopic"/>
+        <xs:element type="xs:string" name="co2DispenserTopic"/>
+        <xs:element type="xs:float" name="kHLowerBound"/>
+        <xs:element type="xs:float" name="kHUpperBound"/>
+        <xs:element type="xs:float" name="kHOptimalValue"/>
+        <xs:element type="xs:float" name="temperatureLowerBound"/>
+        <xs:element type="xs:float" name="temperatureUpperBound"/>
+        <xs:element type="xs:float" name="temperatureOptimalValue"/>
+        <xs:element type="xs:float" name="pHLowerBound"/>
+        <xs:element type="xs:float" name="pHUpperBound"/>
+        <xs:element type="xs:float" name="pHOptimalValue"/>
+        <xs:element type="xs:float" name="epsilon"/>
+        <xs:element type="xs:float" name="epsilonTemperature"/>
+        <xs:element type="xs:float" name="minCO2tankLevel"/>
+        <xs:element type="xs:float" name="minOsmoticWaterTankLevel"/>
+        <xs:element type="xs:float" name="maxCO2tankLevel"/>
+        <xs:element type="xs:float" name="maxOsmoticWaterTankLevel"/>
+        <xs:element type="xs:integer" name="sleepIntervalApp"/>
       </xs:sequence>
     </xs:complexType>
   </xs:element>

@@ -31,6 +31,7 @@ static const char *broker_ip = MQTT_CLIENT_BROKER_IP_ADDR;
 // Defaukt config values
 #define DEFAULT_BROKER_PORT         1883
 #define DEFAULT_PUBLISH_INTERVAL    (30 * CLOCK_SECOND)
+#define SHORT_PUBLISH_INTERVAL (8*CLOCK_SECOND)
 
 
 // We assume that the broker does not require authentication
@@ -64,7 +65,8 @@ AUTOSTART_PROCESSES(&mqtt_temperature_process);
 
 static char client_id[BUFFER_SIZE];
 static char pub_topic[BUFFER_SIZE];
-static char sub_topic[BUFFER_SIZE];
+static char sub_topic1[BUFFER_SIZE];
+static char sub_topic2[BUFFER_SIZE];
 
 // Periodic timer to check the state of the MQTT client
 #define STATE_MACHINE_PERIODIC     (CLOCK_SECOND >> 1)
@@ -88,23 +90,54 @@ PROCESS(mqtt_temperature_process, "MQTT temperature Client");
 
 
 /*---------------------------------------------------------------------------*/
+
+//VARIABLE TO IMPLEMENT CORRECTLY THE SIMULATION, IT'S RELATED TO THE ACTUATOR IMPLEMENTED IN THE CoAP NETWORK
+static bool heater_on = false;
+static bool fan_on = false;
+static bool heater_subscribed = false;
+static bool fan_subscribed = false;
+
+//when the heater or the fan are activated a msg is published in the following topic
 static void
 pub_handler(const char *topic, uint16_t topic_len, const uint8_t *chunk,
             uint16_t chunk_len)
 {
-  printf("Pub Handler: topic='%s' (len=%u), chunk_len=%u\n", topic,
-          topic_len, chunk_len);
 
-  if(strcmp(topic, "temperatureController") == 0) {
-    printf("temperatureController\n");
-	printf("%s\n", chunk);
+//THIS IS A FICTITIOUS MESSAGE!
+  //Just for simulation purposes, in order to set the variable to the correct value!!
 
-    //TODO Do something :)
-    // Set the temperature_controller_status to the value contained in the payload!
+  //printf("Pub Handler: topic='%s' (len=%u), chunk_len=%u\n", topic,topic_len, chunk_len);
 
+  //Topic related to the fan status SIMULATION
+  if(strcmp(topic, "fan") == 0) {
+
+    	if(strcmp((const char*) chunk, "on") == 0) { //Fan activated
+
+		//It's not possible to have the fan and the heater on simultanously
+		heater_on = false;
+		fan_on = true;
+	} else if(strcmp((const char*) chunk, "off") == 0) { //Fan stopped
+		fan_on = false;
+	}
+    
+    return;
+
+  //Topic related to the heater status SIMULATION
+  }else if(strcmp(topic, "heater") == 0){
+
+    	if(strcmp((const char*) chunk, "on") == 0) { //Heater activated
+
+		//It's not possible to have the fan and the heater on simultanously
+		fan_on = false; 
+		heater_on = true;
+	} else if(strcmp((const char*) chunk, "off") == 0) { //Heater stopped
+		heater_on = false;
+	}
+    
     return;
   }
 }
+
 /*---------------------------------------------------------------------------*/
 static void
 mqtt_event(struct mqtt_connection *m, mqtt_event_t event, void *data)
@@ -176,33 +209,23 @@ have_connectivity(void)
 /*Initialized the value of the temperature to the value at the center of the interval*/
 static float temperature_value = 25.0;
 
-/*Extreme of the safe interval for the temperature (to be used for leds)*/
-//static float min_temperature_value = 23.0;
-//static float max_temperature_value = 27.0;
-
 /*Values used respectively to define the upper bound of the possible variation interval and for the standard pH
   variation in case of stabilization using CO2*/
 static float max_temperature_variation = 0.2;
-static float temperature_variation_temperature_controller = 0.05;
+static float temperature_variation_temperature_controller = 0.4;
 
-//TODO change with variation of temperature
-/*If CO2_variation = 0 => no stabilization of pH active (START STATE)
-  if CO2_variation = -1 => the CO2 erogation tries to reduce the pH gradually
-  if CO2_variation = 1 => the CO2 erogation tries to increase the pH gradually
-
-  NOTE: for simulation purposes this value is changed based on the value publiced in the topic related to the CO2
+/*
+  NOTE: for simulation purposes this value is changed based on the value publiced in the topic related to the fan and the heater
 	changes, that is a topic created ONLY to make the simulation coherent. 
 */
 
-//static int CO2_variation = 0;
-
 /*The following function is used to simulate the changes of the temperature sensed by the temperature device; it require a parameter
   that indicates if the temperature controller is active increase/reduce the temperature value.*/
-static void change_temperature_simulation(int temperature_controller){
+static void change_temperature_simulation(){
 
 	
 	/*If no change in the erogation of CO2 is active, so random behaviour*/
-	if(temperature_controller == 0){
+	if((fan_on == false) && (heater_on == false)){
 		/*Generate an integer belonging to the set {0,1,2} to take a decision for the simulation*/
 		int decision = rand() % 3;
 
@@ -227,23 +250,16 @@ static void change_temperature_simulation(int temperature_controller){
 			}			
 		}
 	/*The temperature controller tries to reduce the temperature value,
-	 it is done to keep the temperature inside the interval in which the pH can be modified, since the CO2 erogated is dependanto on the temperature*/
-	}else if(temperature_controller == -1){
+	 it is done to keep the temperature inside the interval in which the pH can be modified, since the CO2 erogated is dependant on the temperature*/
+	}else if(fan_on == true){
 		temperature_value -= temperature_variation_temperature_controller;
 
 	/*The osmotic water erogation tries to increase the temperature value,
-	 it is done to keep the temperature inside the interval in which the pH can be modified, since the CO2 erogated is dependanto on the temperature*/
-	} else if(temperature_controller == 1){
+	 it is done to keep the temperature inside the interval in which the pH can be modified, since the CO2 erogated is dependant on the temperature*/
+	} else if(heater_on == true){
 		temperature_value += temperature_variation_temperature_controller;
 	}
 }
-
-/*TODO custom behavior of each sensor*/
-/*TODO: add the CO2 behaviour both here and in the MQTTCollector;
-        maybe before I have to implement the database part! in this way
-	the mqtt network can be completed without problems.
-	Cambiamenti dati dalla CO2 proporzionali al kH????? maggiore è il kh
-	minore sarà il cambiamento del pH, molto bella come idea*/
 
 /*---------------------------------------------------------------------------*/
 /*---------------------------------------------------------------------------*/
@@ -301,41 +317,59 @@ PROCESS_THREAD(mqtt_temperature_process, ev, data)
 		  
 		  if(state==STATE_CONNECTED){
 		  
-			  // Subscribe to a topic
-			  strcpy(sub_topic,"temperatureController");
+			  // Subscribe to the fan topic
+			  if(fan_subscribed == false){
 
-			  status = mqtt_subscribe(&conn, NULL, sub_topic, MQTT_QOS_LEVEL_0);
+			  	  strcpy(sub_topic1,"fan");
 
-			  printf("[temperature device] Subscribing to topic osmoticWater for simulation purposes!\n");
-			  if(status == MQTT_STATUS_OUT_QUEUE_FULL) {
-				LOG_ERR("[temperature device] Tried to subscribe but command queue was full!\n");
-				PROCESS_EXIT();
-			  }
+			  	  status = mqtt_subscribe(&conn, NULL, sub_topic1, MQTT_QOS_LEVEL_0);
+
+				  printf("[temperature device] Subscribing to topic fan for simulation purposes!\n");
+				  if(status == MQTT_STATUS_OUT_QUEUE_FULL) {
+					LOG_ERR("[temperature device] Tried to subscribe but command queue was full!\n");
+					//PROCESS_EXIT();
+				  }else{
+					fan_subscribed = true;
+				  }
+			  }else if(heater_subscribed == false){
 			  
-			  state = STATE_SUBSCRIBED;
+				  // Subscribe to the heater topic
+				  strcpy(sub_topic2,"heater");
+
+				  status = mqtt_subscribe(&conn, NULL, sub_topic2, MQTT_QOS_LEVEL_0);
+
+				  printf("[temperature device] Subscribing to topic heater for simulation purposes!\n");
+				  if(status == MQTT_STATUS_OUT_QUEUE_FULL) {
+					LOG_ERR("[temperature device] Tried to subscribe but command queue was full!\n");			
+					//PROCESS_EXIT();
+				  }else{
+					heater_subscribed = true;
+				  }
+			  }else if((fan_subscribed == true) && (heater_subscribed == true)){
+					state = STATE_SUBSCRIBED;
+			  }
 		  }
 
 			  
 		if(state == STATE_SUBSCRIBED){
+
 			// Publish something
-		    sprintf(pub_topic, "%s", "temperature");
+		        sprintf(pub_topic, "%s", "temperature");
 			
-			//TODO pass the global var osmotic_water_status
-			change_temperature_simulation(0);
+			change_temperature_simulation();
 
 			// Since the precision of the temperature sensor is limeted to +=0.1 then are sent just the first two digit of the fractional part
 			sprintf(app_buffer, "{\"temperature\":%.1f}", temperature_value);
 			
 				
-			mqtt_publish(&conn, NULL, pub_topic, (uint8_t *)app_buffer,
-               strlen(app_buffer), MQTT_QOS_LEVEL_0, MQTT_RETAIN_OFF);
+			mqtt_publish(&conn, NULL, pub_topic, (uint8_t *)app_buffer, strlen(app_buffer), MQTT_QOS_LEVEL_0, MQTT_RETAIN_OFF);
 		
 		} else if ( state == STATE_DISCONNECTED ){
 		   LOG_ERR("[temperature device] Disconnected from MQTT broker\n");	
-		   // Recover from error
+		   state = STATE_INIT;
 		}
 		
-		etimer_set(&periodic_timer, STATE_MACHINE_PERIODIC);
+		etimer_set(&periodic_timer, SHORT_PUBLISH_INTERVAL);
       
     }
 
