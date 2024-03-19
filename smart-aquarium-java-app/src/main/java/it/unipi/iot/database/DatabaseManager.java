@@ -95,10 +95,10 @@ public class DatabaseManager {
 			preparedStatementCO2Dispenser = connection.prepareStatement("INSERT INTO " +  this.co2DispenserDatabaseTableName + " (level, value) VALUES (?,?)");
 			
 			//Create a prepared statement to interact when the table is Fan
-			preparedStatementPH = connection.prepareStatement("INSERT INTO " +  this.pHDatabaseTableName + " (active) VALUES (?)");
+			preparedStatementFan = connection.prepareStatement("INSERT INTO " +  this.fanDatabaseTableName + " (active) VALUES (?)");
 
 			//Create a prepared statement to interact when the table is Heater
-			preparedStatementPH = connection.prepareStatement("INSERT INTO " +  this.pHDatabaseTableName + " (active) VALUES (?)");
+			preparedStatementHeater = connection.prepareStatement("INSERT INTO " +  this.heaterDatabaseTableName + " (active) VALUES (?)");
 
 		} catch (SQLException e) {
 			System.out.println(LOG_ERROR + " Error during the connection to the database.");
