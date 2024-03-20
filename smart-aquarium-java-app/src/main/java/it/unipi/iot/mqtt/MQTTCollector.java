@@ -16,7 +16,6 @@ import it.unipi.iot.log.Colors;
 import it.unipi.iot.ph.PHSample;
 import it.unipi.iot.temperature.TemperatureSample;
 
-
 /**
  * This class is used to handle the interaction between the MQTT-based devices and the SmartAquariumAPP. <br>
  * It subscribes to the topics in which the sensors will publish their values; It manages the interaction with the database inserting 

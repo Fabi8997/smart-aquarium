@@ -8,7 +8,6 @@ import org.eclipse.californium.core.coap.MediaTypeRegistry;
 import it.unipi.iot.configuration.ConfigurationParameters;
 import it.unipi.iot.log.Colors;
 
-
 /**
  * 
  * This class extends the CoapClient class. <br> It provides the methods to: <br>

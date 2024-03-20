@@ -12,7 +12,7 @@ import it.unipi.iot.log.Colors;
  * 
  * @author Fabi8997
  * This class allow the Smart Aquarium Application to interact with the MYSQL database smart_aquarium. <br>
- * Offers the methods to insert the data in the different tables.
+ * Offers the methods to insert the data in the different tables. 
  *
  */
 public class DatabaseManager {
@@ -95,10 +95,10 @@ public class DatabaseManager {
 			preparedStatementCO2Dispenser = connection.prepareStatement("INSERT INTO " +  this.co2DispenserDatabaseTableName + " (level, value) VALUES (?,?)");
 			
 			//Create a prepared statement to interact when the table is Fan
-			preparedStatementPH = connection.prepareStatement("INSERT INTO " +  this.pHDatabaseTableName + " (active) VALUES (?)");
+			preparedStatementFan = connection.prepareStatement("INSERT INTO " +  this.fanDatabaseTableName + " (active) VALUES (?)");
 
 			//Create a prepared statement to interact when the table is Heater
-			preparedStatementPH = connection.prepareStatement("INSERT INTO " +  this.pHDatabaseTableName + " (active) VALUES (?)");
+			preparedStatementHeater = connection.prepareStatement("INSERT INTO " +  this.heaterDatabaseTableName + " (active) VALUES (?)");
 
 		} catch (SQLException e) {
 			System.out.println(LOG_ERROR + " Error during the connection to the database.");
@@ -115,10 +115,16 @@ public class DatabaseManager {
 	 */
     public boolean insertSample(String table, float value, Float level) {
     	
+    	
         try {
         	
+        	//To avoid insertion when the connection is closed
+        	if(connection.isClosed()) {
+				return false;
+			}
+        	
         	//If the table is the table of the pH
-        	if(table.equals(pHDatabaseTableName) ) {
+        	if(table.equals(pHDatabaseTableName)) {
         		
         		//Use the prepared statement of the pH
         		preparedStatementPH.setFloat(1, value);

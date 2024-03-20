@@ -8,7 +8,7 @@ import org.json.simple.parser.ParseException;
 
  * Class that represent a pH sample, this sample is sensed by the pH sensor and sent through a MQTT message to the broker.
  * This class allows to parse the JSON string sent by the sensor and offers the methods to insert the sample inside the DB.
- * @author Fabi8997
+ * @author Fabi8997 
  */
 
 public class KHSample {

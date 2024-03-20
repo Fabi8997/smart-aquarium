@@ -5,7 +5,6 @@ import it.unipi.iot.configuration.ConfigurationParameters;
 import it.unipi.iot.log.Colors;
 import it.unipi.iot.mqtt.MQTTCollector;
 
-
 /**
  * 
  * Class extending Thread, that implements a control loop.<br>
@@ -28,7 +27,7 @@ public class ControlLogicThread extends Thread {
 	private CoAPNetworkController coapNetworkController;
 	
 	// To keep track of the pH simulation status
-	private static String pHSimulationType = "OFF";
+	private String pHSimulationType = "OFF";
 	
 	//To notify when the Thread should be stopped
 	private static boolean toStop = false;
@@ -266,11 +265,15 @@ public class ControlLogicThread extends Thread {
 	
 				//If the variation in CO2 is low => low variation of PH
 				mqttCollector.simulateCo2Dispenser("SDEC");
+				
+				this.pHSimulationType = "SDEC";
 					
 			}else if(coapNetworkController.getCo2Dispenser().isHighVariation() && !pHSimulationType.equals("DEC")){
 					
 				//If the variation in CO2 is high => high variation of PH
 				mqttCollector.simulateCo2Dispenser("DEC");
+				
+				this.pHSimulationType = "DEC";
 			}	
 			
 			
@@ -288,11 +291,15 @@ public class ControlLogicThread extends Thread {
 	
 				//If the variation in CO2 is low => low variation of PH
 				mqttCollector.simulateCo2Dispenser("SINC");
+				
+				this.pHSimulationType = "SINC";
 					
 			}else if(coapNetworkController.getCo2Dispenser().isHighVariation() && !pHSimulationType.equals("INC")){
 					
 				//If the variation in CO2 is high => high variation of PH
 				mqttCollector.simulateCo2Dispenser("INC");
+				
+				this.pHSimulationType = "INC";
 			}				
 			
 		//If pH in [ OptPH - epsilon, OptPH + epsilon] where optPH is the optimum value for kH
@@ -301,7 +308,10 @@ public class ControlLogicThread extends Thread {
 			//Activate the simulation on kH device
 			mqttCollector.simulateCo2Dispenser("OFF");
 			
+			this.pHSimulationType = "OFF";
+			
 			//The flow of CO2 is always active!
+			//No need to compute the CO2 since all the three measures are stable!
 		}
 	}
 	

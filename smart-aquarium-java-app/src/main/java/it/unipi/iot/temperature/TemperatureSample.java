@@ -9,7 +9,6 @@ import org.json.simple.parser.ParseException;
  * This class allows to parse the JSON string sent by the sensor and offers the methods to insert the sample inside the DB.
  * @author Fabi8997
  */
-
 public class TemperatureSample {
 	
 	

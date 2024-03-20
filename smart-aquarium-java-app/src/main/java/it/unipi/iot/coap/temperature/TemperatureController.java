@@ -60,13 +60,13 @@ public class TemperatureController {
 			if(db.insertSample(configurationParameters.fanDatabaseTableName, 0, null)) {
 				//LOG
 			    System.out.println(LOG2 + " Inserted {" +
-			    				"\"active\": " + fanActive + "," +
+			    				"\"active\": " + fanActive +
 			    				"} in " + configurationParameters.fanDatabaseTableName + "." );
 			}
 			if(db.insertSample(configurationParameters.heaterDatabaseTableName, 0, null)) {
 				//LOG
 			    System.out.println(LOG2 + " Inserted {" +
-			    				"\"active\": " + heaterActive + "," +
+			    				"\"active\": " + heaterActive +
 			    				"} in " + configurationParameters.heaterDatabaseTableName + "." );
 			}
 			
@@ -98,7 +98,7 @@ public class TemperatureController {
                 		if(db.insertSample(configurationParameters.fanDatabaseTableName, 1, null)) {
             				//LOG
             			    System.out.println(LOG2 + " Inserted {" +
-            			    				"\"active\": " + fanActive + "," +
+            			    				"\"active\": " + fanActive +
             			    				"} in " + configurationParameters.fanDatabaseTableName + "." );
             			}
                     }
@@ -137,7 +137,7 @@ public class TemperatureController {
                 		if(db.insertSample(configurationParameters.heaterDatabaseTableName, 1, null)) {
             				//LOG
             			    System.out.println(LOG2 + " Inserted {" +
-            			    				"\"active\": " + heaterActive + "," +
+            			    				"\"active\": " + heaterActive +
             			    				"} in " + configurationParameters.heaterDatabaseTableName + "." );
             			}
                     }
@@ -176,7 +176,7 @@ public class TemperatureController {
 		                	if(db.insertSample(configurationParameters.fanDatabaseTableName, 0, null)) {
 		        				//LOG
 		        			    System.out.println(LOG2 + " Inserted {" +
-		        			    				"\"active\": " + false + "," +
+		        			    				"\"active\": " + false +
 		        			    				"} in " + configurationParameters.fanDatabaseTableName + "." );
 		        			}
 		                }
@@ -215,7 +215,7 @@ public class TemperatureController {
 		                	if(db.insertSample(configurationParameters.heaterDatabaseTableName, 0, null)) {
 		        				//LOG
 		        			    System.out.println(LOG2 + " Inserted {" +
-		        			    				"\"active\": " + heaterActive + "," +
+		        			    				"\"active\": " + heaterActive +
 		        			    				"} in " + configurationParameters.heaterDatabaseTableName + "." );
 		        			}
 		                }

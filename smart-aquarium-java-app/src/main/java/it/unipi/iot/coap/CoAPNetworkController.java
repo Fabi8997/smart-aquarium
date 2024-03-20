@@ -18,8 +18,6 @@ import it.unipi.iot.configuration.ConfigurationParameters;
 import it.unipi.iot.database.DatabaseManager;
 import it.unipi.iot.log.Colors;
 
-
-
 /**
  * 
  * @author Fabi8997

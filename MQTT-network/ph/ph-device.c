@@ -183,10 +183,6 @@ have_connectivity(void)
 /*Initialized the value of the pH to the value at the center of the interval*/
 static float pH_value = 6.75;
 
-/*Extreme of the safe interval for the pH (to be used for leds)*/
-//static float min_pH_value = 6.5;
-//static float max_pH_value = 7.5;
-
 /*Values used respectively to define the upper bound of the possible variation interval and for the standard pH
   variation in case of stabilization using CO2*/
 static float max_pH_variation = 0.05;
