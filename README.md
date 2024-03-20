@@ -26,12 +26,15 @@ Run the following commands: `mvn package` and `java -jar target/smart-aquarium-j
 ### Step 2
 Run the **contiki-ng container** using docker.<br>
 Start the **cooja** simulator.<br>
+Is possible to skip the remaining steps of **step 2**, by opening the `FinalSimulation.csc` using *cooja*. <br>
+<br>
+#### optional:
 **As first** device add the **rpl-border-router**, present inside the `contiki-ng/examples/rpl-border-router/` folder.<br>
 **Then** deploy a **single** device per type. The devices code can be found inside their relative folders: `MQTT-network` and `CoAP-network`.<br>
 Before starting the system the **border router**:<br>
   -Add the socket on the BR: `Tools` -> `Serial Socket (SERVER)` -> `Contiki 1` –> `Press START`<br>
   -Open a new termianl and move to the folder `contiki-ng/examples/rpl-border-router/` and execute the command `make TARGET=cooja connect-router-cooja`<br>
-
+<br>
 ### Step 3
 Import the **smart_aquarium** db on *mysql*.
 
