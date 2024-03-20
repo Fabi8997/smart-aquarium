@@ -115,10 +115,16 @@ public class DatabaseManager {
 	 */
     public boolean insertSample(String table, float value, Float level) {
     	
+    	
         try {
         	
+        	//To avoid insertion when the connection is closed
+        	if(connection.isClosed()) {
+				return false;
+			}
+        	
         	//If the table is the table of the pH
-        	if(table.equals(pHDatabaseTableName) ) {
+        	if(table.equals(pHDatabaseTableName)) {
         		
         		//Use the prepared statement of the pH
         		preparedStatementPH.setFloat(1, value);
