@@ -24,7 +24,7 @@ public class ConfigurationXML {
     /**
      * Constructor of the class.<br>
      * It will validate the XML configuration file using its XSD schema, then the XML configuration file is deserialized 
-     * into a ConfigurationParameters class.
+     * into a ConfigurationParameters class. 
      */
     public ConfigurationXML(){
        configurationParameters = new ConfigurationParameters();

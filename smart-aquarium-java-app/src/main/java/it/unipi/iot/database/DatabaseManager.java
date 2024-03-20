@@ -12,7 +12,7 @@ import it.unipi.iot.log.Colors;
  * 
  * @author Fabi8997
  * This class allow the Smart Aquarium Application to interact with the MYSQL database smart_aquarium. <br>
- * Offers the methods to insert the data in the different tables.
+ * Offers the methods to insert the data in the different tables. 
  *
  */
 public class DatabaseManager {

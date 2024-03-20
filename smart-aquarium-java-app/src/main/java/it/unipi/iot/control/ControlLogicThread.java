@@ -5,7 +5,6 @@ import it.unipi.iot.configuration.ConfigurationParameters;
 import it.unipi.iot.log.Colors;
 import it.unipi.iot.mqtt.MQTTCollector;
 
-
 /**
  * 
  * Class extending Thread, that implements a control loop.<br>
