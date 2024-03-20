@@ -20,7 +20,7 @@ The starting assumption is that the **Ubuntu VM**, with the **Contiki-ng OS cont
 
 ### Step 1
 **Clone** the repository inside the **contiki-ng** folder.<br>
-Move to the ==\smart-aquarium\smart-aquarium-java-app\== folder.<br>
+Move to the `\smart-aquarium\smart-aquarium-java-app\` folder.<br>
 Run the following commands: `mvn package` and `java -jar target/smart-aquarium-java-app-0.0.1-SNAPSHOT.jar` to build and start the application.
 
 ### Step 2
