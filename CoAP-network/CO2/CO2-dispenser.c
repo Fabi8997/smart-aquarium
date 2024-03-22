@@ -202,7 +202,7 @@ PROCESS_THREAD(co2_dispenser, ev, data)
 		  //Reset the boolean variable
 		  to_be_filled = false;
 
-	          //TODO Put the tank to its maximum level
+	          //Put the tank to its maximum level
 		  tank_level = 7000.0;
 
 		  //Turn on the green led and turn off the red led
