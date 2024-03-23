@@ -5,10 +5,9 @@
 #include "net/ipv6/uip-icmp6.h"
 #include "net/ipv6/sicslowpan.h"
 #include "sys/etimer.h"
-#include "sys/ctimer.h"
 #include "lib/sensors.h"
-#include "dev/button-hal.h"
 #include "dev/leds.h"
+#include "dev/etc/rgb-led/rgb-led.h"
 #include "os/sys/log.h"
 #include "mqtt-client.h"
 
@@ -576,7 +575,7 @@ PROCESS_THREAD(mqtt_device_process, ev, data){
 
 			  
 		if(state == STATE_SUBSCRIBED){
-
+			rgb_led_set(RGB_LED_GREEN);
 			//Check whose turn it is
 			if(turn == 1){
 				
@@ -611,8 +610,14 @@ PROCESS_THREAD(mqtt_device_process, ev, data){
 				//Simulate a variation of kH
 				change_kH_simulation();
 
-				// Since the precision of the kH sensor is limeted to +=0.01 then are sent just the first two digit of the fractional part
-				sprintf(app_buffer, "{\"kH\":%d.%d}", (int)(kH_value/100), kH_value%100);
+				//Since the precision of the kH sensor is limeted to +=0.01 then are sent just the first two digit of the fractional part
+				//Check to format well
+				if( (kH_value%100) >= 0 && (kH_value%100)<=9){
+					sprintf(app_buffer, "{\"kH\":%d.0%d}", (int)(kH_value/100), kH_value%100);				
+				}else{
+					sprintf(app_buffer, "{\"kH\":%d.%d}", (int)(kH_value/100), kH_value%100);
+				}
+				
 
 				mqtt_publish(&conn, NULL, pub_topic, (uint8_t *)app_buffer, strlen(app_buffer), MQTT_QOS_LEVEL_0, MQTT_RETAIN_OFF);
 
@@ -627,15 +632,20 @@ PROCESS_THREAD(mqtt_device_process, ev, data){
 				/*-------------------------------------PH------------------------------------*/
 				/*---------------------------------------------------------------------------*/
 			
-				// Publish something
+				//Publish something
 			    	sprintf(pub_topic, "%s", "pH");
 				
 				//Simulate a variation of pH
 				change_pH_simulation();
 
-				// Since the precision of the pH sensor is limeted to +=0.01 then are sent just the first two digit of the fractional part
-				sprintf(app_buffer, "{\"pH\":%d.%d}", (int)(pH_value/100), pH_value%100);
-					
+				//Since the precision of the pH sensor is limeted to +=0.01 then are sent just the first two digit of the fractional part
+				//To format well
+				if( (pH_value%100) >= 0 && (pH_value%100)<=9){
+					sprintf(app_buffer, "{\"pH\":%d.0%d}", (int)(pH_value/100), pH_value%100);
+				}else{
+					sprintf(app_buffer, "{\"pH\":%d.%d}", (int)(pH_value/100), pH_value%100);
+				}	
+
 				mqtt_publish(&conn, NULL, pub_topic, (uint8_t *)app_buffer, strlen(app_buffer), MQTT_QOS_LEVEL_0, MQTT_RETAIN_OFF);
 
 				LOG_INFO("Message: %s published on: %s\n", app_buffer, pub_topic);
@@ -646,7 +656,10 @@ PROCESS_THREAD(mqtt_device_process, ev, data){
 
 			//Restart the publication timer			
 			etimer_set(&periodic_timer, SHORT_PUBLISH_INTERVAL);
-		
+			
+			//Turns off the led
+			rgb_led_off();
+
 		} else if ( state == STATE_DISCONNECTED ){
 		   LOG_ERR("Disconnected from MQTT broker\n");	
 		   state = STATE_INIT;
