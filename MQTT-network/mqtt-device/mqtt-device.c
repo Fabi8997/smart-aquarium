@@ -31,8 +31,8 @@ static const char *broker_ip = MQTT_CLIENT_BROKER_IP_ADDR;
 // Defaukt config values
 #define DEFAULT_BROKER_PORT         1883
 #define DEFAULT_PUBLISH_INTERVAL    (30 * CLOCK_SECOND)
-#define SHORT_PUBLISH_INTERVAL (8*CLOCK_SECOND)
-#define SIMULATION_INTERVAL (2*CLOCK_SECOND)
+#define SHORT_PUBLISH_INTERVAL (5*CLOCK_SECOND)
+#define PUBLISH_INTERVAL (900*CLOCK_SECOND)
 
 
 // We assume that the broker does not require authentication
@@ -65,17 +65,12 @@ AUTOSTART_PROCESSES(&mqtt_device_process);
 #define BUFFER_SIZE 64
 
 static char client_id[BUFFER_SIZE];
-static char pub_topic1[BUFFER_SIZE];
-static char pub_topic2[BUFFER_SIZE];
-//static char sub_topic1[BUFFER_SIZE];
-//static char sub_topic2[BUFFER_SIZE];
+static char pub_topic[BUFFER_SIZE];
 static char sub_topic[BUFFER_SIZE];
-//static char sub_topic2[BUFFER_SIZE];
 
 // Periodic timer to check the state of the MQTT client
 #define STATE_MACHINE_PERIODIC     (CLOCK_SECOND >> 1)
 static struct etimer periodic_timer;
-static struct etimer simulation_timer;
 
 /*---------------------------------------------------------------------------*/
 /*
@@ -84,8 +79,7 @@ static struct etimer simulation_timer;
  */
 #define APP_BUFFER_SIZE 512
 static char app_buffer[APP_BUFFER_SIZE];
-static char app_buffer1[APP_BUFFER_SIZE];
-//static char app_buffer2[APP_BUFFER_SIZE];
+
 /*---------------------------------------------------------------------------*/
 static struct mqtt_message *msg_ptr = 0;
 
@@ -93,8 +87,6 @@ static struct mqtt_connection conn;
 
 /*---------------------------------------------------------------------------*/
 PROCESS(mqtt_device_process, "MQTT device");
-
-
 
 /*---------------------------------------------------------------------------*/
 
@@ -108,13 +100,15 @@ static bool fan_subscribed = false;
 static int osmotic_water_flow = 0;
 static bool osmotic_water_tank_subscribed = false;
 
-//when the heater or the fan are activated a msg is published in the following topic
-static void
-pub_handler(const char *topic, uint16_t topic_len, const uint8_t *chunk,
-            uint16_t chunk_len)
-{
 
-//THIS IS A FICTITIOUS MESSAGE!
+//VARIABLE TO IMPLEMENT CORRECTLY THE SIMULATION, IT'S RELATED TO THE ACTUATOR IMPLEMENTED IN THE CoAP NETWORK
+static int co2_erogation_variation = 0;
+static bool co2_dispenser_subscribed = false;
+
+//when the heater or the fan are activated a msg is published in the following topic
+static void pub_handler(const char *topic, uint16_t topic_len, const uint8_t *chunk, uint16_t chunk_len){
+
+  //THIS IS A FICTITIOUS MESSAGE!
   //Just for simulation purposes, in order to set the variable to the correct value!!
 
   LOG_INFO("Pub Handler: topic: ['%s'] message: ['%s']\n", topic, (const char*) chunk);
@@ -159,9 +153,24 @@ pub_handler(const char *topic, uint16_t topic_len, const uint8_t *chunk,
 	}
 
     return;
+
+  //Topic related to the co2Dispenser status SIMULATION
+  }else if(strcmp(topic, "co2Dispenser") == 0) {
+    
+	if(strcmp((const char*) chunk, "OFF") == 0) { //No change in CO2, random behavior
+		co2_erogation_variation = 0;
+	} else if(strcmp((const char*) chunk, "SDEC") == 0) { //Soft decrease of co2 to increase slowly the pH
+		co2_erogation_variation = -1;
+	} else if(strcmp((const char*) chunk, "SINC") == 0)  { //Soft increase of co2 to decrease slowly the pH
+		co2_erogation_variation = 1;
+	} else if(strcmp((const char*) chunk, "DEC") == 0) { //Decrease of co2 to increase the pH
+		co2_erogation_variation = -2;
+	} else if(strcmp((const char*) chunk, "INC") == 0)  { //Increase of co2 to decrease the pH
+		co2_erogation_variation = 2;
+	}
+
+    return;
   }
-
-
 }
 
 /*---------------------------------------------------------------------------*/
@@ -351,18 +360,97 @@ static void change_kH_simulation(){
 
 
 /*---------------------------------------------------------------------------*/
+/*-------------------------------PH-SIMULATION-------------------------------*/
+/*---------------------------------------------------------------------------*/
+
+/*To avoid the propagation of the error using the float are used integer numbers, multiplied by 100.
+The actual values are 6.75, 0.05, 0.1 and 0.05*/
+
+/*Initialized the value of the pH to the value at the center of the interval*/
+static int pH_value = 675;
+
+/*Values used respectively to define the upper bound of the possible variation interval and for the standard pH
+  variation in case of stabilization using CO2*/
+static int max_pH_variation = 5;
+static int pH_variation_co2 = 10;
+static int soft_pH_variation_co2 = 5;
+
+/*
+  NOTE: for simulation purposes this value is changed based on the value publiced in the topic related to the OsmoticWaterTank
+	changes, that is a topic created ONLY to make the simulation coherent. 
+*/
+
+/*The following function is used to simulate the changes of the pH sensed by the pH device; it require a parameter
+  that indicates if the CO2 variation is activated to increase/reduce the pH value.*/
+static void change_pH_simulation(){
+
+	
+	/*If no change in the erogation of CO2 is active, so random behaviour*/
+	if(co2_erogation_variation == 0){
+		/*Generate an integer belonging to the set {0,1,2} to take a decision for the simulation*/
+		int decision = rand() % 3;
+
+		/*Generate a value in the interval [0.0, 0.5] used to vary the pH*/
+		int pH_variation = rand() % (max_pH_variation + 1);
+
+		switch(decision){
+			/*No variation*/
+			case 0:{
+				break;
+			}
+			/*Increment the pH*/
+			case 1:{
+				pH_value += pH_variation;
+				break;
+			}
+			/*Decrease the pH*/
+			case 2:{
+				pH_value -= pH_variation;
+				break;
+			}			
+		}
+
+	/*The CO2 erogation tries to reduce the pH value, it is done gradually to avoid to harm the fishes*/
+	}else if(co2_erogation_variation == -1){
+		pH_value += soft_pH_variation_co2; //Soft increase in co2 erogation to softly decrease the pH
+
+	/*The CO2 erogation tries to reduce the pH value, it is done gradually to avoid to harm the fishes*/
+	}else if(co2_erogation_variation == -2){ 
+		pH_value += pH_variation_co2; //Increase in co2 erogation to decrease the pH
+
+	/*The CO2 erogation tries to increase the pH value, it is done gradually to avoid to harm the fishes*/
+	}else if(co2_erogation_variation == 1){
+		pH_value -= soft_pH_variation_co2; //Soft decrease in co2 erogation to softly increase the pH
+
+	/*The CO2 erogation tries to reduce the pH value, it is done gradually to avoid to harm the fishes*/
+	}else if(co2_erogation_variation == 2){
+		pH_value -= pH_variation_co2; //Decrease in co2 erogation to increase the pH
+	}
+}
+
+/*---------------------------------------------------------------------------*/
 /*---------------------------------------------------------------------------*/
 /*---------------------------------------------------------------------------*/
 
-PROCESS_THREAD(mqtt_device_process, ev, data)
-{
+
+/*---------------------------------------------------------------------------*/
+//In order a new value of temperature, kH and pH are published.
+//1 = temperature turn
+//2 = kH turn
+//3 = pH turn
+// 1 -> 2 -> 3 -> 1 -> 2 ... 
+static int turn = 1;
+
+/*---------------------------------------------------------------------------*/
+
+PROCESS_THREAD(mqtt_device_process, ev, data){
 
   PROCESS_BEGIN();
   
   mqtt_status_t status;
   char broker_address[CONFIG_IP_ADDR_STR_LEN];
 
-  printf("MQTT temperature Process\n");
+  LOG_INFO("MQTT device process initialization...\n");
 
   // Initialize the ClientID as MAC address
   snprintf(client_id, BUFFER_SIZE, "%02x%02x%02x%02x%02x%02x",
@@ -371,8 +459,7 @@ PROCESS_THREAD(mqtt_device_process, ev, data)
                      linkaddr_node_addr.u8[6], linkaddr_node_addr.u8[7]);
 
   // Broker registration					 
-  mqtt_register(&conn, &mqtt_device_process, client_id, mqtt_event,
-                  MAX_TCP_SEGMENT_SIZE);
+  mqtt_register(&conn, &mqtt_device_process, client_id, mqtt_event, MAX_TCP_SEGMENT_SIZE);
 				  
   state=STATE_INIT;
 				    
@@ -384,8 +471,7 @@ PROCESS_THREAD(mqtt_device_process, ev, data)
 
     PROCESS_YIELD();
 
-    if((ev == PROCESS_EVENT_TIMER && data == &periodic_timer) || 
-	      ev == PROCESS_EVENT_POLL){
+    if((ev == PROCESS_EVENT_TIMER && data == &periodic_timer) || ev == PROCESS_EVENT_POLL){
 			  			  
 		  if(state==STATE_INIT){
 			 if(have_connectivity()==true)  
@@ -393,6 +479,7 @@ PROCESS_THREAD(mqtt_device_process, ev, data)
 		  } 
 		  
 		  if(state == STATE_NET_OK){
+
 			  // Connect to MQTT server
 			  LOG_INFO("Connecting to the MQTT server!\n");
 			  
@@ -414,105 +501,165 @@ PROCESS_THREAD(mqtt_device_process, ev, data)
 			  	  status = mqtt_subscribe(&conn, NULL, sub_topic, MQTT_QOS_LEVEL_0);
 
 				  LOG_INFO("Subscribing to topic fan for simulation purposes!\n");
+
 				  if(status == MQTT_STATUS_OUT_QUEUE_FULL) {
+
 					LOG_ERR("Tried to subscribe but command queue was full!\n");
-					//PROCESS_EXIT();
+					
 				  }else{
 					fan_subscribed = true;
 				  }
+
+			  // Subscribe to the heater topic
 			  }else if(heater_subscribed == false){
 			  
-				  // Subscribe to the heater topic
 				  strcpy(sub_topic,"heater");
 
 				  status = mqtt_subscribe(&conn, NULL, sub_topic, MQTT_QOS_LEVEL_0);
 
 				  LOG_INFO("Subscribing to topic heater for simulation purposes!\n");
+
 				  if(status == MQTT_STATUS_OUT_QUEUE_FULL) {
+
 					LOG_ERR("Tried to subscribe but command queue was full!\n");			
-					//PROCESS_EXIT();
+					
 				  }else{
 					heater_subscribed = true;
 				  }
+
+			  //Subscribe to the OsmoticWaterTank topic
 			  }else if(osmotic_water_tank_subscribed == false){
 
-				  //Subscribe to the OsmoticWaterTank topic
 				  strcpy(sub_topic,"OsmoticWaterTank");
 
 				  status = mqtt_subscribe(&conn, NULL, sub_topic, MQTT_QOS_LEVEL_0);
 
 				  LOG_INFO("Subscribing to topic OsmoticWaterTank for simulation purposes!\n");
+
 				  if(status == MQTT_STATUS_OUT_QUEUE_FULL) {
+
 					LOG_ERR("Tried to subscribe but command queue was full!\n");
-					//PROCESS_EXIT();
+
 				  }else{
 					osmotic_water_tank_subscribed = true;
 				  }
-			  }else if((fan_subscribed == true) && (heater_subscribed == true) && (osmotic_water_tank_subscribed == true)){
+
+			  // Subscribe to the co2Dispenser topic
+			  }else if(co2_dispenser_subscribed == false){
+
+				  strcpy(sub_topic,"co2Dispenser");
+
+				  status = mqtt_subscribe(&conn, NULL, sub_topic, MQTT_QOS_LEVEL_0);
+
+				  LOG_INFO("Subscribing to topic CO2 for simulation purposes!\n");
+
+				  if(status == MQTT_STATUS_OUT_QUEUE_FULL) {
+
+					LOG_ERR("Tried to subscribe but command queue was full!\n");
+
+				  }else{
+					co2_dispenser_subscribed = true;
+   				  }
+
+			  //Registered to all the topics
+			  }else if((fan_subscribed == true) && (heater_subscribed == true) && 
+				   (osmotic_water_tank_subscribed == true) && (co2_dispenser_subscribed == true)){
+
 					LOG_INFO("Successfully subscribed to all topics!\n");
+
 					state = STATE_SUBSCRIBED;
+
+					//Start the publication timer			
+					etimer_set(&periodic_timer, SHORT_PUBLISH_INTERVAL);
 			  }
 		  }
 
 			  
 		if(state == STATE_SUBSCRIBED){
 
-			/*---------------------------------------------------------------------------*/
-			/*---------------------------------TEMPERATURE-------------------------------*/
-			/*---------------------------------------------------------------------------*/
+			//Check whose turn it is
+			if(turn == 1){
+				
+				/*---------------------------------------------------------------------------*/
+				/*---------------------------------TEMPERATURE-------------------------------*/
+				/*---------------------------------------------------------------------------*/
 
-			// Publish something
-		        sprintf(pub_topic1, "%s", "temperature");
+				// Publish something
+				sprintf(pub_topic, "%s", "temperature");
+				
+				change_temperature_simulation();
+
+				// Since the precision of the temperature sensor is limeted to +=0.1 then are sent just the first two digit of the fractional part
+				sprintf(app_buffer, "{\"temperature\":%d.%d}", (int)(temperature_value/10), temperature_value%10);
+
+				mqtt_publish(&conn, NULL, pub_topic, (uint8_t *)app_buffer, strlen(app_buffer), MQTT_QOS_LEVEL_0, MQTT_RETAIN_OFF);
+
+				LOG_INFO("Message: %s published on: %s\n", app_buffer, pub_topic);
+				
+				//Pass the turn to 2
+				turn = 2;
+
+			}else if(turn == 2){
+
+				/*---------------------------------------------------------------------------*/
+				/*-------------------------------------KH------------------------------------*/
+				/*---------------------------------------------------------------------------*/
+
+				// Publish something
+				sprintf(pub_topic, "%s", "kH");
+				
+				//Simulate a variation of kH
+				change_kH_simulation();
+
+				// Since the precision of the kH sensor is limeted to +=0.01 then are sent just the first two digit of the fractional part
+				sprintf(app_buffer, "{\"kH\":%d.%d}", (int)(kH_value/100), kH_value%100);
+
+				mqtt_publish(&conn, NULL, pub_topic, (uint8_t *)app_buffer, strlen(app_buffer), MQTT_QOS_LEVEL_0, MQTT_RETAIN_OFF);
+
+				LOG_INFO("Message: %s published on: %s\n", app_buffer, pub_topic);
+				
+				//Give the turn to 1
+				turn = 3;
+
+			}else if (turn == 3){
 			
-			change_temperature_simulation();
-
-			// Since the precision of the temperature sensor is limeted to +=0.1 then are sent just the first two digit of the fractional part
-			sprintf(app_buffer, "{\"temperature\":%d.%d}", (int)(temperature_value/10), temperature_value%10);
+				/*---------------------------------------------------------------------------*/
+				/*-------------------------------------PH------------------------------------*/
+				/*---------------------------------------------------------------------------*/
 			
-			mqtt_publish(&conn, NULL, pub_topic1, (uint8_t *)app_buffer, strlen(app_buffer), MQTT_QOS_LEVEL_0, MQTT_RETAIN_OFF);
+				// Publish something
+			    	sprintf(pub_topic, "%s", "pH");
+				
+				//Simulate a variation of pH
+				change_pH_simulation();
 
-			//bzero(app_buffer, sizeof(app_buffer));
-			//bzero(pub_topic1, sizeof(pub_topic1));
+				// Since the precision of the pH sensor is limeted to +=0.01 then are sent just the first two digit of the fractional part
+				sprintf(app_buffer, "{\"pH\":%d.%d}", (int)(pH_value/100), pH_value%100);
+					
+				mqtt_publish(&conn, NULL, pub_topic, (uint8_t *)app_buffer, strlen(app_buffer), MQTT_QOS_LEVEL_0, MQTT_RETAIN_OFF);
 
-			LOG_INFO("Message: %s published on: %s\n", app_buffer, pub_topic1);
+				LOG_INFO("Message: %s published on: %s\n", app_buffer, pub_topic);
 
-			etimer_set(&simulation_timer, SIMULATION_INTERVAL);
-			PROCESS_YIELD();
+				//Give the turn to 1
+				turn = 1;
+			}
 
-			/*---------------------------------------------------------------------------*/
-			/*-------------------------------------KH------------------------------------*/
-			/*---------------------------------------------------------------------------*/
-
-			// Publish something
-			sprintf(pub_topic2, "%s", "sensors/kH");
-			
-			//Pass the global var osmotic_water_flow to the simulation in order to simulate the value correctly
-			change_kH_simulation(osmotic_water_flow);
-
-			// Since the precision of the kH sensor is limeted to +=0.01 then are sent just the first two digit of the fractional part
-			sprintf(app_buffer1, "{\"kH\":%d.%d}", (int)(kH_value/100), kH_value%100);
-			
-			//bzero(app_buffer, sizeof(app_buffer1));
-			//bzero(pub_topic1, sizeof(pub_topic2));				
-
-			//mqtt_publish(&conn, NULL, pub_topic2, (uint8_t *)app_buffer1, strlen(app_buffer1), MQTT_QOS_LEVEL_0, MQTT_RETAIN_OFF);
-			LOG_INFO("Message: %s published on: %s\n", app_buffer1, pub_topic2);
-
-
-			/*---------------------------------------------------------------------------*/
-			/*-------------------------------------PH------------------------------------*/
-			/*---------------------------------------------------------------------------*/
+			//Restart the publication timer			
+			etimer_set(&periodic_timer, SHORT_PUBLISH_INTERVAL);
 		
 		} else if ( state == STATE_DISCONNECTED ){
 		   LOG_ERR("Disconnected from MQTT broker\n");	
 		   state = STATE_INIT;
 		}
 		
-		etimer_set(&periodic_timer, SHORT_PUBLISH_INTERVAL);
-      
-    }
+		//Restart the initialization timer if the state is not subscribed
+		if(state != STATE_SUBSCRIBED){
+			etimer_set(&periodic_timer, STATE_MACHINE_PERIODIC);
+		}
 
-  }
+    }//end event check
+
+  }//end while
 
   PROCESS_END();
 }
