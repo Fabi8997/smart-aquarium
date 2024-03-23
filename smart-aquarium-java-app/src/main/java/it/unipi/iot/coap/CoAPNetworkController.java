@@ -322,6 +322,35 @@ public class CoAPNetworkController extends CoapServer {
 					exchange.respond(ResponseCode.BAD_REQUEST);
 				}
 				
+			}else if(device.equals("coapDevice")) {
+				
+				//TODO add all the device registration!
+				/*
+				//If no device already registered
+				if(temperatureController == null) {
+					
+					//Create a new CoAP Client
+					temperatureController = new TemperatureController(ipAddress,configurationParameters,db);
+					
+					System.out.println(LOG + " new " + device + " registered!");
+					
+					//Set the response code and the payload message
+					exchange.respond(ResponseCode.CREATED, "registered");
+				}else {
+					
+					System.out.println(LOG + " " + device + " already registered!");
+					
+					//Device already registered
+					exchange.respond(ResponseCode.BAD_REQUEST);
+				}
+				*/
+				
+				//ONLY FOR DEBUG
+				System.out.println(LOG + " new " + device + " registered!");
+				
+				//Set the response code and the payload message
+				exchange.respond(ResponseCode.CREATED, "registered");
+				
 			}else {
 				
 				//IF IT REACHES THIS POINT SOMETHING IN THE REQUEST IS WRONG
