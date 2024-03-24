@@ -3,11 +3,16 @@
 #include "os/dev/leds.h"
 #include "sys/etimer.h"
 #include "os/dev/leds.h"
+#include "os/dev/button-hal.h"
+#include "dev/etc/rgb-led/rgb-led.h"
 
 #include "routing/routing.h"
 
 #include "coap-engine.h"
 #include "coap-blocking-api.h"
+
+#include "osmotic-water-device-var.h"
+#include "CO2-dispenser-var.h"
 
 /* Log configuration */
 #include "sys/log.h"
@@ -18,12 +23,15 @@
 #define SERVER_EP "coap://[fd00::1]:5683"
 
 // Define the interval to wait before sending the new requests
-#define START_INTERVAL 5
+#define START_INTERVAL 1
 #define REGISTRATION_INTERVAL 1
+#define FLOW_INTERVAL 20
 
 // Define the resource
 extern coap_resource_t res_fan;
 extern coap_resource_t res_heater;
+extern coap_resource_t res_water_tank;
+extern coap_resource_t res_co2_tank;
 
 // Service URL
 char *service_url = "/registration";
@@ -34,6 +42,10 @@ static bool connected = false;
 // To check if the device is registered to the coap reg server
 static bool registered = false;
 
+//To check if the application has sent a stop message
+bool water_tank_to_stop = false;
+bool co2_to_stop = false;
+
 /* Declare and auto-start this file's process */
 PROCESS(coap_device, "CoAP device");
 AUTOSTART_PROCESSES(&coap_device);
@@ -42,7 +54,10 @@ AUTOSTART_PROCESSES(&coap_device);
 // Timers used to make the tries for the connection and registration
 static struct etimer wait_connection;
 static struct etimer wait_registration;
+static struct etimer flow_timer;
 
+//Button to be used to signal the fill of the tank
+static button_hal_button_t *btn;
 
 /* This function is will be passed to COAP_BLOCKING_REQUEST() to handle responses. */
 void client_chunk_handler(coap_message_t *response)
@@ -64,8 +79,8 @@ void client_chunk_handler(coap_message_t *response)
   if(strcmp((char*)chunk, "registered") == 0){
 	LOG_INFO("Registration completed!\n");
 
-	//Turn off the yellow led
-	leds_single_off(LEDS_YELLOW);
+	//Turn off the blue led
+	leds_single_off(LEDS_BLUE);
 
 	//Turn on the green led
 	leds_set(LEDS_GREEN);
@@ -100,12 +115,14 @@ PROCESS_THREAD(coap_device, ev, data)
 
   etimer_set( &wait_connection, CLOCK_SECOND * START_INTERVAL);
 
-  //Led yellow to notify that the device is not connected yet
-  leds_toggle(LEDS_YELLOW);
+  //Led blue to notify that the device is not connected yet
+  leds_toggle(LEDS_BLUE);
 
-  //Activate the resource!! TODO add the other resources!
+  //Activate the resources!
   coap_activate_resource(&res_fan, "temperature/fan");
   coap_activate_resource(&res_heater, "temperature/heater");
+  coap_activate_resource(&res_water_tank, "OsmoticWaterTank/tank");
+  coap_activate_resource(&res_co2_tank, "co2Dispenser/tank");
 
   LOG_INFO("Connectiong to the Border Router... \n");
 
@@ -120,8 +137,8 @@ PROCESS_THREAD(coap_device, ev, data)
 		//Set the flag to signal the end of the connection
 		connected = true;
 
-		//Start the blink of the yellow led
-		leds_toggle(LEDS_YELLOW);
+		//Start the blink of the blue led
+		leds_toggle(LEDS_BLUE);
 
 	}else {
 
@@ -135,12 +152,11 @@ PROCESS_THREAD(coap_device, ev, data)
   //Start the registration timer
   etimer_set( &wait_registration, CLOCK_SECOND * REGISTRATION_INTERVAL);
 
-  //TODO change just to coapDevice
   while(!registered){
 	PROCESS_WAIT_UNTIL(etimer_expired(&wait_registration));
 
-	//Blink the yellow led until registered
-	leds_toggle(LEDS_YELLOW);
+	//Blink the blue led until registered
+	leds_toggle(LEDS_BLUE);
 
 	//Prepare the message
 	coap_init_message(request, COAP_TYPE_CON, COAP_POST, 0);
@@ -154,9 +170,111 @@ PROCESS_THREAD(coap_device, ev, data)
 	COAP_BLOCKING_REQUEST(&server_ep, request, client_chunk_handler);
 
   }
-
   
   LOG_INFO("Device started correctly!\n");
+  
+  //Set the timer that check if every FLOW_INTERVAL seconds an info about the resource must be sent to the server
+  etimer_set( &flow_timer, CLOCK_SECOND * FLOW_INTERVAL);
+
+  while(1){
+
+	//Check if it the application has sent a message to stop the device
+	if(water_tank_to_stop && co2_to_stop){
+		break;
+	}
+
+	//Wait for the expiration of the timer OR a button event
+	PROCESS_WAIT_EVENT_UNTIL( ev == PROCESS_EVENT_TIMER || ev == button_hal_periodic_event );
+	
+	//If the event is related to the timer then trigger the event resource
+	if(ev == PROCESS_EVENT_TIMER){
+
+		res_water_tank.trigger();
+		res_co2_tank.trigger();
+
+		//Reset the timer 
+		etimer_reset(&flow_timer);
+
+	}else if((ev == button_hal_periodic_event) && (water_tank_to_be_filled == true)) {
+	//IF the button has been pressed AND the water tank must be filled		
+	  
+	  //Retrieve the data about the button
+	  btn = (button_hal_button_t *)data;
+
+          //Blink (every second the red blink during the pression)
+	  leds_toggle(LEDS_RED);
+
+	  //If it is pressed for 5 second it means that the water is filled
+	  if(btn->press_duration_seconds == 5) {
+		
+		  //Reset the boolean variable
+		  water_tank_to_be_filled = false;
+
+	          //Put the tank to its maximum level
+		  water_tank_level = 5000;
+
+		  //Turn on the green led and turn off the red led
+		  leds_off(LEDS_RED);
+		  leds_on(LEDS_GREEN);
+
+		  res_water_tank.trigger();
+	
+		  LOG_INFO("Osmotic water tank filled correctly!\n");
+
+	  //At the release of the button check if the press duration is lower than 5
+	  }else if(ev == button_hal_release_event){
+
+		//Retrieve the data about the button
+		btn = (button_hal_button_t *)data;
+
+		//If the button was not pressed for sufficient time keep the red led on
+		if(btn->press_duration_seconds < 5){
+			leds_on(LEDS_RED);
+		}
+	  }//END IF BTN EVENT
+
+ 	}else if((ev == button_hal_periodic_event) && (co2_to_be_filled == true)) {
+	//IF the button has been pressed AND the co2 tank must be filled		
+	  
+	  //Retrieve the data about the button
+	  btn = (button_hal_button_t *)data;
+
+          //Blink (every second the red blink during the pression)
+	  leds_toggle(LEDS_RED);
+
+	  //If it is pressed for 5 second it means that the co2 is filled
+	  if(btn->press_duration_seconds == 5) {
+		
+		  //Reset the boolean variable
+		  co2_to_be_filled = false;
+
+	          //Put the tank to its maximum level
+		  co2_tank_level = 700000; //float 7000.00
+
+		  //Turn on the green led and turn off the red led
+		  leds_off(LEDS_RED);
+		  leds_on(LEDS_GREEN);
+
+		  //Start the flow again
+		  co2_flow = true;
+
+		  res_co2_tank.trigger();
+	
+		  LOG_INFO("CO2 Tank filled correctly!\n");
+
+	  //At the release of the button check if the press duration is lower than 5
+	  }else if(ev == button_hal_release_event){
+
+		//Retrieve the data about the button
+		btn = (button_hal_button_t *)data;
+
+		//If the button was not pressed for sufficient time keep the red led on
+		if(btn->press_duration_seconds < 5){
+			leds_on(LEDS_RED);
+		}
+	  }//END IF BTN EVENT
+ 	}//END IF TO BE FILLED
+  }//END WHILE
 
   PROCESS_END();
 }

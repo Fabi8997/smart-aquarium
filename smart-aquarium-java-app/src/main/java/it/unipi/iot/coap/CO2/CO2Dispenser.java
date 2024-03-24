@@ -153,7 +153,7 @@ public class CO2Dispenser extends CoapClient {
                         System.out.println(LOG + " Put operation failed [device: CO2Dispenser].");
                     }else {
                     	
-                    	System.out.println(LOG + " Changed CO2 dispensed [ value = "+Colors.ANSI_GREEN+currentCO2+Colors.ANSI_RESET+" ].");
+                    	System.out.println(LOG + " Changed CO2 dispensed [ value = "+Colors.ANSI_GREEN+String.format("%.2f",currentCO2)+Colors.ANSI_RESET+" ].");
                     }
                 }
             }
@@ -164,7 +164,7 @@ public class CO2Dispenser extends CoapClient {
 
 			
 
-        }, "value="+currentCO2, MediaTypeRegistry.TEXT_PLAIN);
+        }, "value="+String.format("%.2f",currentCO2), MediaTypeRegistry.TEXT_PLAIN);
 	}
 	
 	

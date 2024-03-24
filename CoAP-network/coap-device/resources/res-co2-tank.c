@@ -19,11 +19,12 @@ static void res_get_handler(coap_message_t *request, coap_message_t *response, u
 static void res_delete_handler(coap_message_t *request, coap_message_t *response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset);
 static void res_event_handler();
 
+//To handle the error propagation and the fact that the floats cannot be sent, then are used integers, then converted into float strings
 bool co2_flow = false;
-float co2_tank_level = 7000.0;
-static float minimum_tank_level = 400.0;
+int co2_tank_level = 700000; //float 7000.0
+static int minimum_tank_level = 40000; //float 400.0
 bool co2_to_be_filled = false;
-float co2_value = 0;
+int co2_value = 0; // float 0.0
 
 EVENT_RESOURCE(res_co2_tank,
          "title=\"Tank resource",
@@ -47,8 +48,20 @@ res_get_handler(coap_message_t *request, coap_message_t *response, uint8_t *buff
   
   char* mode = (co2_flow)?"on":"off";
   coap_set_header_content_format(response, APPLICATION_JSON);
-  coap_set_payload(response, buffer, snprintf((char *)buffer, COAP_MAX_CHUNK_SIZE, "{\"level\":%.2f , \"mode\":\"%s\"}", co2_tank_level, mode));
 
+  if( (co2_tank_level%100) >= 0 && (co2_tank_level%100)<=9){
+	coap_set_payload(
+		response,
+		buffer,
+ 		snprintf((char *)buffer, COAP_MAX_CHUNK_SIZE, "{\"level\":%d.0%d , \"mode\":\"%s\"}", (int)(co2_tank_level/100), co2_tank_level%100, mode)
+	);			
+  }else{
+	coap_set_payload(
+		response,
+		buffer,
+ 		snprintf((char *)buffer, COAP_MAX_CHUNK_SIZE, "{\"level\":%d.%d , \"mode\":\"%s\"}", (int)(co2_tank_level/100), co2_tank_level%100, mode)
+	);	
+  }
 }
 
 static void res_put_handler(coap_message_t *request, coap_message_t *response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset)
@@ -115,7 +128,7 @@ static void res_put_handler(coap_message_t *request, coap_message_t *response, u
 
     //Check if the value is greater than 0
     if(new_co2_value > 0){
-	co2_value = new_co2_value;
+	co2_value = (int)(new_co2_value*100);
     }else{
 	success_value = 0;
     }
@@ -136,7 +149,12 @@ static void res_event_handler(){
 		//Reduce the level of the CO2 tank by the value that is currently flowing
 		co2_tank_level -= co2_value;
 
-		LOG_DBG("Level: %f\n", co2_tank_level);
+
+		if( (co2_tank_level%100) >= 0 && (co2_tank_level%100)<=9){
+			LOG_INFO("Level: %d.0%d\n", (int)(co2_tank_level/100), co2_tank_level%100);				
+		}else{
+			LOG_INFO("Level: %d.%d\n", (int)(co2_tank_level/100), co2_tank_level%100);
+		}
 
 		//If the level is too low stop the flow and signal that the tank must be changed
 		if ( co2_tank_level <= minimum_tank_level){

@@ -21,8 +21,8 @@ static void res_delete_handler(coap_message_t *request, coap_message_t *response
 static void res_event_handler();
 
 static bool flow = false;
-float water_tank_level = 5000.0;
-static float minimum_tank_level = 100.0;
+int water_tank_level = 5000;
+static int minimum_tank_level = 100;
 bool water_tank_to_be_filled = false;
 
 
@@ -37,17 +37,17 @@ EVENT_RESOURCE(res_water_tank,
 static void 
 res_delete_handler(coap_message_t *request, coap_message_t *response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset)
 {
-	LOG_INFO("Received delete request:\n");
+	LOG_INFO("Received DELETE request:\n");
 	water_tank_to_stop = true;
 }
 
 static void
 res_get_handler(coap_message_t *request, coap_message_t *response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset)
 {
-  
+    LOG_INFO("Received PUT request\n");
   char* mode = (flow)?"on":"off";
   coap_set_header_content_format(response, APPLICATION_JSON);
-  coap_set_payload(response, buffer, snprintf((char *)buffer, COAP_MAX_CHUNK_SIZE, "{\"level\":%.2f , \"mode\":\"%s\"}", water_tank_level, mode));
+  coap_set_payload(response, buffer, snprintf((char *)buffer, COAP_MAX_CHUNK_SIZE, "{\"level\":%d.0 , \"mode\":\"%s\"}", water_tank_level, mode));
 
 }
 
@@ -58,7 +58,7 @@ static void res_put_handler(coap_message_t *request, coap_message_t *response, u
   const char *mode = NULL;
   int success = 1;  
 
-  LOG_INFO("Received put request\n");
+  LOG_INFO("Received PUT request\n");
 
   //If the request has the mode variable
   if((len = coap_get_post_variable(request, "mode", &mode))) {
@@ -110,9 +110,9 @@ static void res_event_handler(){
 	if(flow == true){
 
 		//Reduce the tank level
-		water_tank_level -= 50.0;
+		water_tank_level -= 50;
 
-		LOG_INFO("Level: %f\n", water_tank_level);
+		LOG_INFO("Level: %d\n", water_tank_level);
 
 		if ( water_tank_level <= minimum_tank_level){
 			LOG_INFO("Tank level too low! Flow stopped!");

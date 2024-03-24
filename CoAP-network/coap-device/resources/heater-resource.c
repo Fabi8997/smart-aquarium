@@ -8,7 +8,7 @@
 
 /* Log configuration */
 #include "sys/log.h"
-#define LOG_MODULE "temperature controller"
+#define LOG_MODULE "Heater resource"
 #define LOG_LEVEL LOG_LEVEL_INFO
 
 
@@ -27,7 +27,7 @@ RESOURCE(res_heater,
 static void
 res_get_handler(coap_message_t *request, coap_message_t *response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset)
 {
-  
+  LOG_INFO("Recieved GET request\n");
   char* mode = (active)?"on":"off";
   coap_set_header_content_format(response, APPLICATION_JSON);
   coap_set_payload(response, buffer, snprintf((char *)buffer, COAP_MAX_CHUNK_SIZE, "{\"mode\":\"%s\"}", mode));
@@ -41,7 +41,7 @@ static void res_put_handler(coap_message_t *request, coap_message_t *response, u
   const char *mode = NULL;
   int success = 1;  
 
-  LOG_INFO("Received put request\n");
+  LOG_INFO("Received PUT request\n");
 
   //If the request has the mode variable
   if((len = coap_get_post_variable(request, "mode", &mode))) {
