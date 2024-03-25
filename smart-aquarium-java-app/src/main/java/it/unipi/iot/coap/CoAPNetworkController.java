@@ -56,7 +56,6 @@ public class CoAPNetworkController extends CoapServer {
 	public CoAPNetworkController(ConfigurationParameters configurationParameters, DatabaseManager db) {
 		super();
 		this.add(new CoAPRegistrationResource("registration"));
-		//TODO this.addEndpoint(new Endpoint());
 		this.configurationParameters = configurationParameters;
 		this.db = db;
 		this.osmoticWaterTankDatabaseTableName = configurationParameters.osmoticWaterTankDatabaseTableName;
@@ -322,12 +321,202 @@ public class CoAPNetworkController extends CoapServer {
 					exchange.respond(ResponseCode.BAD_REQUEST);
 				}
 				
+			}else if(device.equals("coapDevice")) {
+				
+				//Register all the devices
+				registerTemperatureDevice(exchange, ipAddress, "temperatureController");
+				registerOsmoticWaterTank(exchange, ipAddress, "osmoticWaterTank");
+				registerCO2Dispenser(exchange, ipAddress, "CO2Dispenser");
+				
+				//ONLY FOR DEBUG
+				System.out.println(LOG + " new " + device + " registered --> ip address: "+ipAddress);
+				
+				//Set the response code and the payload message
+				exchange.respond(ResponseCode.CREATED, "registered");
+				
 			}else {
 				
 				//IF IT REACHES THIS POINT SOMETHING IN THE REQUEST IS WRONG
 				exchange.respond(ResponseCode.BAD_REQUEST);
 			}
 	 	}
+	}
+	
+	/**
+	 * Register a new temperature controller (used in case of coapDevice)
+	 * @param exchange
+	 * @param ipAddress
+	 * @param device
+	 */
+	private void registerTemperatureDevice(CoapExchange exchange, String ipAddress, String device) {
+		
+		//If no device already registered
+		if(temperatureController == null) {
+			
+			//Create a new CoAP Client
+			temperatureController = new TemperatureController(ipAddress,configurationParameters,db);
+			
+			System.out.println(LOG + " new " + device + " created!");
+			
+		}else {
+			
+			System.out.println(LOG + " " + device + " already created!");
+
+		}
+	}
+	
+	/**
+	 * Register a new osmotic water tank device
+	 * @param exchange
+	 * @param ipAddress
+	 * @param device
+	 */
+	private void registerOsmoticWaterTank(CoapExchange exchange, String ipAddress, String device) {
+		
+		//If no device already registered
+		if(osmoticWaterTank == null) {
+			
+			//Create a new CoAP Client
+			osmoticWaterTank = new OsmoticWaterTank(ipAddress,configurationParameters);
+			
+			//Create the observer relation
+			observeWaterTankRelation = osmoticWaterTank.observe(
+					new CoapHandler() {
+						@Override public void onLoad(CoapResponse response) {
+							
+							//Objects to handle the JSON format
+							JSONParser parser = new JSONParser();
+							JSONObject requestTextJSON = null;
+							
+							try {
+								requestTextJSON = (JSONObject) parser.parse(response.getResponseText());
+							} catch (ParseException e) {
+								
+								System.out.println(LOG_ERROR + " " + e.getMessage());	
+							}
+
+							//If correctly parsed
+							if(requestTextJSON != null) {
+								
+								//Retrieve the mode field since if the flow can be stopped due to low level 
+								String mode = (String) requestTextJSON.get("mode");
+								
+								//Check if the mode is changed and set the flag
+								if(mode.equals("on") && !osmoticWaterTank.isOsmoticWaterTankFlowActive()) {
+									
+									//Set the flow as active
+									osmoticWaterTank.setOsmoticWaterTankFlowActive(true);
+									
+								}else if(mode.equals("off") && osmoticWaterTank.isOsmoticWaterTankFlowActive()){
+									
+									//Set the flow as inactive
+									osmoticWaterTank.setOsmoticWaterTankFlowActive(false);
+									
+								}
+				
+								//Retrieve the tank level
+							    osmoticWaterTank.setOsmoticWaterTankLevel(new Float((Double) requestTextJSON.get("level")));
+							    
+							    //Insert the sample in the DB
+							    db.insertSample(osmoticWaterTankDatabaseTableName, osmoticWaterTank.getOsmoticWaterTankLevel(), null);
+							    
+							    //LOG
+							    System.out.println(LOG + " Inserted " + requestTextJSON.toJSONString() + " in " + osmoticWaterTankDatabaseTableName + "." );
+							}
+						}
+						@Override public void onError() {
+							System.out.println(LOG_ERROR + " Connection to the osmotic water tank resource lost...");
+						}
+					});
+
+			
+			System.out.println(LOG + " new " + device + " created!");
+			
+		}else {
+			
+			System.out.println(LOG + " " + device + " already created!");
+			
+		}
+		
+	}
+	
+	/**
+	 * Register a new CO2Dispenser (used in case of coapDevice)
+	 * @param exchange
+	 * @param ipAddress
+	 * @param device
+	 */
+	private void registerCO2Dispenser(CoapExchange exchange, String ipAddress, String device) {
+		
+		//If no device already registered
+		if(co2Dispenser == null) {
+			
+			//Create a new CoAP Client
+			co2Dispenser = new CO2Dispenser(ipAddress,configurationParameters);
+			
+			//Create the observer relation
+			observeCO2TankRelation = co2Dispenser.observe(
+					new CoapHandler() {
+						@Override public void onLoad(CoapResponse response) {
+							
+							//Objects to handle the JSON format
+							JSONParser parser = new JSONParser();
+							JSONObject requestTextJSON = null;
+							
+							try {
+								requestTextJSON = (JSONObject) parser.parse(response.getResponseText());
+							} catch (ParseException e) {
+								System.out.println(LOG_ERROR + " " + e.getMessage());
+								
+							}
+
+							//If correctly parsed
+							if(requestTextJSON != null) {
+								
+								//Retrieve the mode field since if the flow can be stopped due to low level 
+								String mode = (String) requestTextJSON.get("mode");
+								
+								//Check if the mode is changed and set the flag
+								if(mode.equals("on") && !co2Dispenser.isCo2DispenserTankFlowActive()) {
+									
+									//Set the flow as active
+									co2Dispenser.setCo2DispenserTankFlowActive(true);
+									
+								}else if(mode.equals("off") && co2Dispenser.isCo2DispenserTankFlowActive()){
+									
+									//Set the flow as inactive
+									co2Dispenser.setCo2DispenserTankFlowActive(false);
+									
+								}
+				
+								//Retrieve the tank level
+							    co2Dispenser.setCo2DispenserTankLevel(new Float((Double) requestTextJSON.get("level")));
+							    
+							    //Insert the sample in the DB
+							    db.insertSample(co2DispenserDatabaseTableName,
+							    				co2Dispenser.getCurrentCO2(),
+							    				co2Dispenser.getCo2DispenserTankLevel());
+							    
+							    //LOG
+							    System.out.println(LOG + " Inserted {" +
+							    				"\"Level\": " + co2Dispenser.getCo2DispenserTankLevel() + "," +
+							    				"\"Value\": " + co2Dispenser.getCurrentCO2() + 
+							    				"} in " + co2DispenserDatabaseTableName + "." );
+							}
+						}
+						
+						@Override public void onError() {
+							System.out.println(LOG_ERROR + " Connection to the CO2 tank resource lost...");
+						}
+					});
+		
+			System.out.println(LOG + " new " + device + " created!");
+			
+		}else {
+			
+			System.out.println(LOG + " " + device + " already created!");
+
+		}
 	}
 	
 	/**

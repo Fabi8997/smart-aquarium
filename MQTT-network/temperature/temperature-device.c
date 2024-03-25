@@ -223,6 +223,9 @@ static float temperature_variation_temperature_controller = 0.4;
   that indicates if the temperature controller is active increase/reduce the temperature value.*/
 static void change_temperature_simulation(){
 
+	char fractional_part[3];
+	sprintf(fractional_part, "%d", (int)((temperature_value-(int)temperature_value)*10));
+	LOG_INFO("Current temp: %d.%s\n", (int)temperature_value, fractional_part);
 	
 	/*If no change in the erogation of CO2 is active, so random behaviour*/
 	if((fan_on == false) && (heater_on == false)){
@@ -259,6 +262,9 @@ static void change_temperature_simulation(){
 	} else if(heater_on == true){
 		temperature_value += temperature_variation_temperature_controller;
 	}
+
+	sprintf(fractional_part, "%d", (int)((temperature_value-(int)temperature_value)*100));
+	LOG_INFO("New temp: %d.%s\n", (int)temperature_value, fractional_part);
 }
 
 /*---------------------------------------------------------------------------*/
@@ -353,13 +359,17 @@ PROCESS_THREAD(mqtt_temperature_process, ev, data)
 			  
 		if(state == STATE_SUBSCRIBED){
 
+			char fractional_part[3];
+
 			// Publish something
 		        sprintf(pub_topic, "%s", "temperature");
 			
 			change_temperature_simulation();
 
+			sprintf(fractional_part, "%d", (int)((temperature_value-(int)temperature_value)*10));
+
 			// Since the precision of the temperature sensor is limeted to +=0.1 then are sent just the first two digit of the fractional part
-			sprintf(app_buffer, "{\"temperature\":%.1f}", temperature_value);
+			sprintf(app_buffer, "{\"temperature\":%d.%s}", (int)temperature_value, fractional_part);
 			
 				
 			mqtt_publish(&conn, NULL, pub_topic, (uint8_t *)app_buffer, strlen(app_buffer), MQTT_QOS_LEVEL_0, MQTT_RETAIN_OFF);
