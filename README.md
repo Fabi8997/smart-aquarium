@@ -38,8 +38,8 @@ Run the command `mvn package` to build the application.
   **f)** To start the **border router** run the command `make TARGET=nrf52840 BOARD=dongle PORT=/dev/ttyACM0 connect-router` *NOTE: ttyACMX is just the port on which the USB device is inserted, change the X with the correct number* (to see the devices run `ls /dev/ttyACM*` ).<br>
   **g)** **Open** a new terminal (docker -exec ...), **Move** to the `contiki-ng/smart-aquarium/MQTT-network/mqtt-device/` and perform the steps **c)** and **d)** for the second device. **Compile** the code running the command: `make TARGET=nrf52840 BOARD=dongle mqtt-device.dfu-upload PORT=/dev/ttyACM1` and perform again the step **d)**.<br>
   **h)** To see the **output** of the device run the command: `make login TARGET=nrf52840 BOARD=dongle PORT=/dev/ttyACM1`.<br>
-  **g)** **Open** a new terminal (docker -exec ...), **Move** to the `contiki-ng/smart-aquarium/CoAP-network/coap-device/` and perform the steps **c)** and **d)** for the third device. **Compile** the code running the command: `make TARGET=nrf52840 BOARD=dongle coap-device.dfu-upload PORT=/dev/ttyACM2` and perform again the step **d)**.<br>
-  **h)** To see the **output** of the device run the command: `make login TARGET=nrf52840 BOARD=dongle PORT=/dev/ttyACM2`.<br>
+  **i)** **Open** a new terminal (docker -exec ...), **Move** to the `contiki-ng/smart-aquarium/CoAP-network/coap-device/` and perform the steps **c)** and **d)** for the third device. **Compile** the code running the command: `make TARGET=nrf52840 BOARD=dongle coap-device.dfu-upload PORT=/dev/ttyACM2` and perform again the step **d)**.<br>
+  **j)** To see the **output** of the device run the command: `make login TARGET=nrf52840 BOARD=dongle PORT=/dev/ttyACM2`.<br>
 
 ### Step 4: Run the Smart Aquarium Application
 From a new terminal **outside the container**, move to the `\smart-aquarium\smart-aquarium-java-app\` folder and run the following command to start the app: `java -jar target/smart-aquarium-java-app-0.0.1-SNAPSHOT.jar`. 
